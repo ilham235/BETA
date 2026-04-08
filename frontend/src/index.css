@@ -1,0 +1,12 @@
+/* RESET WAJIB */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* CEGAH LAYOUT MELEBAR */
+html, body, #root {
+  width: 100%;
+  overflow-x: hidden;
+}
