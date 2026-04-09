@@ -27,9 +27,9 @@ export default function Login() {
           <input type="text" placeholder="Username" />
           <input type="password" placeholder="Password" />
 
-          <div className="remember">
-            <input type="checkbox" />
-            <span>Ingat saya</span>
+          <div className="remember-container">
+            <input type="checkbox" id="remember" />
+            <label htmlFor="remember">Ingat saya</label>
           </div>
 
           <button type="submit">Login</button>

@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { PieChart } from 'react-minimal-pie-chart';
-import { useNavigate } from "react-router-dom";
-import logoBeta from "../assets/beta.png";
-import iconPagi from "../assets/pagi.png";
+import Sidebar from "../components/Sidebar"; // Import Sidebar baru
 import poto from "../assets/poto.jpg";
+import iconPagi from "../assets/pagi.png";
 import iconSiang from "../assets/siang.png";
 import iconSore from "../assets/sore.png";
 import "./Dashboard.css";
@@ -12,80 +11,41 @@ import TambahTugas from "./TambahTugas";
 import {
   FiArrowUpRight, FiChevronDown,
   FiChevronRight,
-  FiFileText,
-  FiHelpCircle,
-  FiLayout,
-  FiLogOut,
   FiPlus,
   FiSearch,
-  FiSettings,
-  FiUsers
+  FiLayout
 } from "react-icons/fi";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const handleLogout = () => {
-    navigate("/");
-  };
 
   return (
     <div className="dashboard-container">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="logo-section">
-          <img 
-            src={logoBeta} 
-            alt="BETA - Bersih dan Tertata" 
-            className="logo-full-img" 
-          />
-        </div>
+      {/* Cukup panggil komponen Sidebar */}
+      <Sidebar />
 
-        <nav className="menu">
-          <p className="menu-label">MENU</p>
-          <div className="menu-item active"><FiLayout /> Dashboard</div>
-          <div className="menu-item"><FiUsers /> Penugasan OB</div>
-          <div className="menu-item"><FiFileText /> Pengawasan</div>
-          <div className="menu-item"><FiFileText /> Laporan</div>
-
-          <p className="menu-label" style={{ marginTop: "30px" }}>UMUM</p>
-          <div className="menu-item"><FiSettings /> Pengaturan</div>
-          <div className="menu-item"><FiHelpCircle /> Bantuan</div>
-          <div className="menu-item logout" onClick={handleLogout}><FiLogOut /> Logout</div>
-        </nav>
-      </aside>
-
-      {/* MAIN CONTENT */}
       <main className="main-content">
-        {/* TOPBAR */}
         <header className="topbar">
           <div className="search-bar">
             <FiSearch />
             <input type="text" placeholder="Cari..." />
           </div>
           <div className="user-profile">
-            {/* Foto Profil */}
             <img src={poto} alt="avatar" className="avatar" />
-            
-            {/* Nama dan Role */}
             <div className="user-info">
               <p className="user-name">Wowo</p>
               <p className="user-role">Pengawas</p>
             </div>
-
-            {/* Ikon Panah Bawah */}
             <FiChevronDown className="dropdown-icon" />
           </div>
         </header>
 
-        {/* KOTAK KONTEN UTAMA (#F6F6F6) */}
         <section className="content-inner">
           <div className="header-title">
             <h1>Dashboard Pengawas</h1>
             <p>Monitoring dan pengawasan tugas kebersihan</p>
           </div>
 
-          {/* STATS CARDS */}
           <div className="stats-grid">
             <div className="stat-card green">
               <div className="stat-header">
@@ -159,7 +119,6 @@ export default function Dashboard() {
           </div>
 
           <div className="bottom-grid">
-            {/* TABLE SECTION */}
             <div className="table-container">
               <div className="table-header">
                 <div className="header-left">
@@ -206,49 +165,36 @@ export default function Dashboard() {
               <div className="see-more">Lihat Selengkapnya <FiChevronRight /></div>
             </div>
 
-            {/* RIGHT WIDGETS */}
             <div className="widgets">
-              {/* SHIFT LENGKAP DENGAN IKON GAMBAR BARU */}
               <div className="shift-card">
                 <div className="card-header">
                   <h3>Shift</h3>
                   <div className="icon-arrow-circle"><FiArrowUpRight /></div>
                 </div>
                 <div className="shift-list">
-                  
-                  {/* Pagi */}
                   <div className="shift-item">
-                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
                     <img src={iconPagi} alt="Pagi" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Pagi</p>
                       <p className="shift-timer">00:20:00 Sisa</p>
                     </div>
                   </div>
-
-                  {/* Siang */}
                   <div className="shift-item disabled">
-                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
                     <img src={iconSiang} alt="Siang" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Siang</p>
                       <p className="shift-timer">00:00:00 Sisa</p>
                     </div>
                   </div>
-
-                  {/* Sore */}
                   <div className="shift-item disabled">
-                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
                     <img src={iconSore} alt="Sore" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Sore</p>
                       <p className="shift-timer">00:00:00 Sisa</p>
                     </div>
                   </div>
-
                 </div>
               </div>
-
               <div className="report-card">
                 <div className="card-header">
                   <h3>Buat <br /> Laporan</h3>
@@ -260,9 +206,8 @@ export default function Dashboard() {
           </div>
         </section>
       </main>
-      <TambahTugas 
-        show={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} />
+
+      <TambahTugas show={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

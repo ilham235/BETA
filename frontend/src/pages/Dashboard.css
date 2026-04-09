@@ -78,6 +78,7 @@
 
 .menu-item {
   display: flex;
+  text-decoration: none;
   align-items: center;
   gap: 12px;
   padding: 12px;
