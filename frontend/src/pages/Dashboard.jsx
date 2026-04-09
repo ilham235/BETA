@@ -1,16 +1,34 @@
+import { useState } from "react";
+import { PieChart } from 'react-minimal-pie-chart';
 import { useNavigate } from "react-router-dom";
-import React from "react";
-import "./Dashboard.css";
-
-// 1. IMPORT gambar logo di sini (Pastikan file beta.png ada di folder src/assets)
 import logoBeta from "../assets/beta.png";
+import iconPagi from "../assets/pagi.png";
+import poto from "../assets/poto.jpg";
+import iconSiang from "../assets/siang.png";
+import iconSore from "../assets/sore.png";
+import "./Dashboard.css";
+import TambahTugas from "./TambahTugas";
 
-import { 
-  FiLayout, FiUsers, FiFileText, FiSettings, 
-  FiHelpCircle, FiLogOut, FiSearch, FiPlus, FiChevronRight, FiArrowUpRight
+import {
+  FiArrowUpRight, FiChevronDown,
+  FiChevronRight,
+  FiFileText,
+  FiHelpCircle,
+  FiLayout,
+  FiLogOut,
+  FiPlus,
+  FiSearch,
+  FiSettings,
+  FiUsers
 } from "react-icons/fi";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleLogout = () => {
+    navigate("/");
+  };
+
   return (
     <div className="dashboard-container">
       {/* SIDEBAR */}
@@ -33,7 +51,7 @@ export default function Dashboard() {
           <p className="menu-label" style={{ marginTop: "30px" }}>UMUM</p>
           <div className="menu-item"><FiSettings /> Pengaturan</div>
           <div className="menu-item"><FiHelpCircle /> Bantuan</div>
-          <div className="menu-item logout"><FiLogOut /> Logout</div>
+          <div className="menu-item logout" onClick={handleLogout}><FiLogOut /> Logout</div>
         </nav>
       </aside>
 
@@ -46,14 +64,21 @@ export default function Dashboard() {
             <input type="text" placeholder="Cari..." />
           </div>
           <div className="user-profile">
+            {/* Foto Profil */}
+            <img src={poto} alt="avatar" className="avatar" />
+            
+            {/* Nama dan Role */}
             <div className="user-info">
               <p className="user-name">Wowo</p>
               <p className="user-role">Pengawas</p>
             </div>
-            <img src="https://via.placeholder.com/40" alt="avatar" className="avatar" />
+
+            {/* Ikon Panah Bawah */}
+            <FiChevronDown className="dropdown-icon" />
           </div>
         </header>
 
+        {/* KOTAK KONTEN UTAMA (#F6F6F6) */}
         <section className="content-inner">
           <div className="header-title">
             <h1>Dashboard Pengawas</h1>
@@ -62,7 +87,6 @@ export default function Dashboard() {
 
           {/* STATS CARDS */}
           <div className="stats-grid">
-            {/* Kartu 1 - Hijau */}
             <div className="stat-card green">
               <div className="stat-header">
                 <p>Tugas Hari Ini</p>
@@ -75,7 +99,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Kartu 2 - Putih */}
             <div className="stat-card white">
               <div className="stat-header">
                 <p>Area Tercover</p>
@@ -88,7 +111,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Kartu 3 - Putih */}
             <div className="stat-card white">
               <div className="stat-header">
                 <p>Tugas Selesai</p>
@@ -101,28 +123,44 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Kartu 4 - Progres */}
-            <div className="stat-card white">
+            <div className="stat-card white progres-card-container">
               <div className="stat-header">
                 <p>Progres Monitoring</p>
                 <div className="stat-icon-circle border"><FiArrowUpRight /></div>
               </div>
-              <div className="progress-container">
-                <div className="semi-circle">
-                  <span className="percentage">100%</span>
-                </div>
-                <div className="progress-legend">
-                  <span><i className="dot sudah"></i> Sudah</span>
-                  <span><i className="dot belum"></i> Belum</span>
-                </div>
+              <div className="gauge-wrapper">
+                <PieChart
+                  data={[{ value: 100, color: '#edf2f7' }]}
+                  lineWidth={25}
+                  startAngle={180}
+                  lengthAngle={180}
+                  rounded
+                  className="gauge-bg"
+                />
+                <PieChart
+                  data={[{ value: 80, color: '#0a8f3c' }]} 
+                  totalValue={100}
+                  lineWidth={25}
+                  startAngle={180}
+                  lengthAngle={180}
+                  rounded
+                  animate
+                  label={({ dataEntry }) => `${dataEntry.value}%`}
+                  labelStyle={{ fontSize: '22px', fontWeight: 'bold', fill: '#2d3748' }}
+                  labelPosition={0}
+                  className="gauge-chart"
+                />
+              </div>
+              <div className="progress-legend">
+                <div className="legend-item"><i className="dot sudah"></i> Sudah</div>
+                <div className="legend-item"><i className="dot belum"></i> Belum</div>
               </div>
             </div>
           </div>
 
           <div className="bottom-grid">
             {/* TABLE SECTION */}
-           <div className="table-container">
-              {/* HEADER TABEL */}
+            <div className="table-container">
               <div className="table-header">
                 <div className="header-left">
                   <h3>Tugas Hari Ini</h3>
@@ -131,18 +169,13 @@ export default function Dashboard() {
                 <div className="table-actions">
                   <div className="small-search">
                     <FiSearch />
-                    <input type="text" placeholder="Cari tugas, area, atau petugas" />
+                    <input type="text" placeholder="Cari tugas..." />
                   </div>
-                  <button className="btn-monitoring">
-                    <FiLayout /> Monitoring
-                  </button>
-                  <button className="btn-add">
-                    <FiPlus /> Tambah Tugas
-                  </button>
+                  <button className="btn-monitoring"><FiLayout /> Monitoring</button>
+                  <button className="btn-add" onClick={()=> setIsModalOpen(true)}><FiPlus /> Tambah Tugas</button>
                 </div>
               </div>
 
-              {/* TABEL DATA */}
               <table>
                 <thead>
                   <tr>
@@ -162,78 +195,60 @@ export default function Dashboard() {
                     <td><span className="status selesai">Selesai</span></td>
                   </tr>
                   <tr>
-                    <td>Lantai 2 - Ruang Rapat</td>
-                    <td>Pel Lantai</td>
-                    <td>Pagi</td>
-                    <td>Udin Mujadi</td>
-                    <td><span className="status selesai">Selesai</span></td>
-                  </tr>
-                  <tr>
-                    <td>Lantai 2 - Ruang Rapat</td>
-                    <td>Lap/Rapikan Meja dan Kursi</td>
-                    <td>Pagi</td>
-                    <td>Udin Mujadi</td>
-                    <td><span className="status selesai">Selesai</span></td>
-                  </tr>
-                  <tr>
                     <td>Lantai 1 - Kantor</td>
                     <td>Sapu Lantai</td>
                     <td>Pagi</td>
                     <td>Ahmad Suryadi</td>
                     <td><span className="status belum">Belum</span></td>
                   </tr>
-                  <tr>
-                    <td>Lantai 1 - Toilet</td>
-                    <td>Kuras dan Sikat Toilet</td>
-                    <td>Siang</td>
-                    <td>Ahmad Suryadi</td>
-                    <td><span className="status belum">Belum</span></td>
-                  </tr>
                 </tbody>
               </table>
-              
-              <div className="see-more">
-                Lihat Selengkapnya <FiChevronRight />
-              </div>
+              <div className="see-more">Lihat Selengkapnya <FiChevronRight /></div>
             </div>
 
             {/* RIGHT WIDGETS */}
             <div className="widgets">
-              {/* WIDGET SHIFT */}
+              {/* SHIFT LENGKAP DENGAN IKON GAMBAR BARU */}
               <div className="shift-card">
                 <div className="card-header">
                   <h3>Shift</h3>
                   <div className="icon-arrow-circle"><FiArrowUpRight /></div>
                 </div>
-                
                 <div className="shift-list">
+                  
+                  {/* Pagi */}
                   <div className="shift-item">
-                    <span className="shift-icon">🌅</span>
+                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
+                    <img src={iconPagi} alt="Pagi" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Pagi</p>
                       <p className="shift-timer">00:20:00 Sisa</p>
                     </div>
                   </div>
-                  
+
+                  {/* Siang */}
                   <div className="shift-item disabled">
-                    <span className="shift-icon">☀️</span>
+                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
+                    <img src={iconSiang} alt="Siang" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Siang</p>
                       <p className="shift-timer">00:00:00 Sisa</p>
                     </div>
                   </div>
-                  
+
+                  {/* Sore */}
                   <div className="shift-item disabled">
-                    <span className="shift-icon">🌇</span>
+                    {/* +++ GANTI EMOJI DENGAN IMG +++ */}
+                    <img src={iconSore} alt="Sore" className="shift-img-icon" />
                     <div className="shift-info">
                       <p className="shift-name">Shift Sore</p>
                       <p className="shift-timer">00:00:00 Sisa</p>
                     </div>
                   </div>
+
                 </div>
               </div>
 
-              {/* WIDGET BUAT LAPORAN */}
               <div className="report-card">
                 <div className="card-header">
                   <h3>Buat <br /> Laporan</h3>
@@ -245,6 +260,9 @@ export default function Dashboard() {
           </div>
         </section>
       </main>
+      <TambahTugas 
+        show={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

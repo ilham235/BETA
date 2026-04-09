@@ -7,16 +7,47 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-light);
+  background-color: white;
   font-family: 'Inter', sans-serif;
+  padding: 20px;
+  gap: 20px;
+  box-sizing: border-box;
 }
 
 /* SIDEBAR */
 .sidebar {
   width: 260px;
-  background: white;
+  background:#F6F6F6;
   padding: 30px 20px;
-  border-right: 1px solid #edf2f7;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+.content-inner {
+  background-color: #F6F6F6;
+  flex: 1;
+  padding: 30px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  overflow-y: auto;
+}
+.stat-card.white, 
+.table-container, 
+.shift-card {
+  background: white !important; /* Kartu-kartu kecil tetap putih di atas dasar abu */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+.search-bar {
+  background: white; 
+  padding: 10px 20px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 300px;
 }
 
 .logo-section {
@@ -66,14 +97,19 @@
 /* MAIN CONTENT */
 .main-content {
   flex: 1;
-  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .topbar {
+  background: #F6F6F6;
+  padding: 15px 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
 }
 
 .search-bar {
@@ -85,6 +121,47 @@
   gap: 10px;
   width: 300px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center; /* Menyejajarkan semua elemen secara vertikal */
+  gap: 12px;           /* Jarak antar elemen profil */
+  cursor: pointer;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column; /* Nama di atas, Role di bawah */
+  justify-content: center;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2D3748;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 13px;
+  color: #718096;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.dropdown-icon {
+  color: #718096;
+  font-size: 18px;
+  margin-left: 10px; /* Jarak tambahan untuk ikon panah */
 }
 
 .search-bar input { border: none; outline: none; width: 100%; }
@@ -122,6 +199,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .stat-header p { font-size: 13px; font-weight: 500; }
@@ -147,27 +226,38 @@
 
 .stat-card.green .footer-main { color: #f6e05e; /* Kuning cerah */ }
 
-/* Progress Monitoring Grafik Sederhana */
-.progress-container {
+.progres-card-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: -10px;
+  justify-content: space-between;
 }
 
-.semi-circle {
-  width: 80px;
-  height: 40px;
-  border: 8px solid #edf2f7;
-  border-top-color: var(--primary-green);
-  border-radius: 50px 50px 0 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+.gauge-wrapper {
   position: relative;
+  width: 140px;
+  height: 70px;
+  margin-top: 10px;
 }
 
-.percentage { font-size: 14px; font-weight: 700; position: absolute; bottom: -5px; }
+.gauge-chart {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+.gauge-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* biar teks % tepat di tengah lengkungan */
+.progres-card-container text {
+  transform: translateY(12px); 
+}
 
 .progress-legend {
   display: flex;
@@ -248,8 +338,8 @@
 }
 
 .btn-add {
-  background: #f1f4f8;
-  color: #2d3748;
+  background: var(--primary-green);
+  color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 12px;
@@ -360,8 +450,13 @@ td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f7fafc; }
   gap: 15px;
 }
 
-.shift-icon {
-  font-size: 24px;
+.shift-img-icon {
+  width: 32px;      
+  height: 32px;
+  object-fit: contain; /* biar gk gepeng */
+}
+.shift-item.disabled {
+  opacity: 0.4;     
 }
 
 .shift-name {
@@ -420,4 +515,43 @@ td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f7fafc; }
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Tambahkan styling button dan widget sesuai kebutuhan visual */
+/* overlay */
+/* Overlay menutupi seluruh layar browser */
+.modal-overlay {
+  position: fixed; /* WAJIB: Lepas dari flow layout */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* Background Hitam Transparan */
+  display: flex;
+  justify-content: center; /* Tengah horizontal */
+  align-items: center;     /* Tengah vertikal */
+  z-index: 9999;          /* Angka sangat tinggi agar di depan Sidebar */
+  backdrop-filter: blur(4px); /* Efek blur di belakang modal */
+}
+
+/* Kotak Modal Putih (Persegi Panjang Vertikal) */
+.modal-content {
+  background: white;
+  width: 90%;
+  max-width: 450px; /* Lebar dibatasi agar berbentuk persegi panjang */
+  padding: 30px;
+  border-radius: 30px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 10000;
+  animation: modalSlideUp 0.3s ease-out;
+}
+
+/* Animasi sederhana agar modal muncul dari bawah */
+@keyframes modalSlideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Pastikan elemen dashboard-container tidak memiliki properti transform 
+   yang bisa mengganggu position: fixed */
+.dashboard-container {
+  position: relative;
+}
