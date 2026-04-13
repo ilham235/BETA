@@ -1,18 +1,23 @@
-import React from "react";
+import {
+    FiFileText,
+    FiHelpCircle,
+    FiLayout,
+    FiLogOut,
+    FiSettings,
+    FiUsers
+} from "react-icons/fi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoBeta from "../assets/beta.png";
-import { 
-  FiLayout, FiUsers, FiFileText, FiSettings, 
-  FiHelpCircle, FiLogOut 
-} from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("Login");
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   return (
