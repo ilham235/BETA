@@ -44,4 +44,13 @@ export const authAPI = {
   getUsers: () => apiClient.get("/auth/users"),
 };
 
+export const penugasanAPI = {
+  getAll: () => apiClient.get("/penugasan"),
+  create: (data) => apiClient.post("/penugasan", data),
+  update: (id, data) => apiClient.put(`/penugasan/${id}`, data),
+  delete: (id) => apiClient.delete(`/penugasan/${id}`),
+  getOB: () => apiClient.get("/penugasan/ob/all"),
+  getRuangan: () => apiClient.get("/penugasan/ruangan/all"),
+};
+
 export default apiClient;

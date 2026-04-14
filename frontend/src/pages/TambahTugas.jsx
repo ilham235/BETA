@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from "react";
-import "./TambahTugas.css";
+import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { 
-  FiX, FiCalendar, FiUsers, FiMapPin, 
-  FiBriefcase, FiClock, FiFileText, FiUserPlus 
+import {
+  FiBriefcase,
+  FiCalendar,
+  FiClock, FiFileText,
+  FiMapPin,
+  FiUserPlus,
+  FiUsers,
+  FiX
 } from "react-icons/fi";
+import { penugasanAPI } from "../service/api";
+import "./TambahTugas.css";
 
 const TambahTugas = ({ show, onClose, dataEdit }) => {
   const [formData, setFormData] = useState({
@@ -17,6 +23,24 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
     shift: "Pagi",
     deskripsi: ""
   });
+  const [obList, setObList] = useState([]);
+  const [ruanganList, setRuanganList] = useState([]);
+
+  // Load OB and Ruangan data from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const obResponse = await penugasanAPI.getOB();
+        setObList(obResponse.data.data || []);
+        
+        const ruanganResponse = await penugasanAPI.getRuangan();
+        setRuanganList(ruanganResponse.data.data || []);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+    loadData();
+  }, []);
 
   // Logika Frontend: Pantau jika ada dataEdit yang masuk
   useEffect(() => {
@@ -92,27 +116,36 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
           <div className="form-group-item">
             <label className="label-with-icon"><FiUsers /> Pilih Petugas/OB</label>
             <select name="petugas" value={formData.petugas} onChange={handleChange} className="custom-select">
-              <option value="Udin Mujadi">Udin Mujadi</option>
-              <option value="Ahmad Suryadi">Ahmad Suryadi</option>
+              <option value="">-- Pilih Petugas --</option>
+              {obList.map((ob) => (
+                <option key={ob.id_ob} value={ob.nama_ob}>
+                  {ob.nama_ob}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group-item">
             <label className="label-with-icon"><FiMapPin /> Pilih Area</label>
             <select name="area" value={formData.area} onChange={handleChange} className="custom-select">
-              <option value="Lantai 1 - Toilet">Lantai 1 - Toilet</option>
-              <option value="Lantai 1 - Kantor">Lantai 1 - Kantor</option>
-              <option value="Lantai 2 - Ruang Rapat">Lantai 2 - Ruang Rapat</option>
+              <option value="">-- Pilih Area --</option>
+              {ruanganList.map((ruangan) => (
+                <option key={ruangan.id_ruangan} value={`${ruangan.nama_ruangan} - Lantai ${ruangan.lantai}`}>
+                  {ruangan.nama_ruangan} (Lantai {ruangan.lantai})
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group-item">
             <label className="label-with-icon"><FiBriefcase /> Pilih Tugas</label>
             <select name="tugas" value={formData.tugas} onChange={handleChange} className="custom-select">
-              <option value="Pel Lantai">Pel Lantai</option>
-              <option value="Sapu Lantai">Sapu Lantai</option>
-              <option value="Kuras dan Sikat Toilet">Kuras dan Sikat Toilet</option>
-              <option value="Buang Sampah">Buang Sampah</option>
+              <option value="">-- Pilih Tugas --</option>
+              {ruanganList.map((ruangan) => (
+                <option key={ruangan.id_ruangan} value={ruangan.detail_pekerjaan || ''}>
+                  {ruangan.detail_pekerjaan || 'Tanpa tugas'}
+                </option>
+              ))}
             </select>
           </div>
 

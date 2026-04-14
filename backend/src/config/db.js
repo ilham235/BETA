@@ -1,5 +1,5 @@
-import pkg from "pg";
 import dotenv from "dotenv";
+import pkg from "pg";
 
 dotenv.config();
 const { Pool } = pkg;
@@ -10,6 +10,11 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+});
+
+// Error handling untuk pool
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
 });
 
 export default pool;
