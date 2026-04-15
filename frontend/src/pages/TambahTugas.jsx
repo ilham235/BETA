@@ -51,10 +51,10 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
       setFormData({
         tanggalMulai: new Date(), // Dummy date
         tanggalSelesai: new Date(),
-        petugas: dataEdit.petugas,
-        area: dataEdit.area,
-        tugas: dataEdit.tugas === "-" ? "Pel Lantai" : dataEdit.tugas,
-        shift: dataEdit.shift,
+        petugas: dataEdit.petugas || "",
+        area: dataEdit.area || "",
+        tugas: dataEdit.tugas && dataEdit.tugas !== "-" ? dataEdit.tugas : "",
+        shift: dataEdit.shift || "",
         deskripsi: dataEdit.deskripsi || ""
       });
     } else {
@@ -62,10 +62,10 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
       setFormData({
         tanggalMulai: new Date(),
         tanggalSelesai: new Date(),
-        petugas: "Udin Mujadi",
-        area: "Lantai 1 - Toilet",
-        tugas: "Pel Lantai",
-        shift: "Pagi",
+        petugas: "",
+        area: "",
+        tugas: "",
+        shift: "",
         deskripsi: ""
       });
     }
@@ -87,38 +87,27 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
     
     if (!user || !user.id) {
       console.error("User tidak terautentikasi");
-      alert("Error: User tidak teridentifikasi. Silakan login kembali.");
-      return;
-    }
-
-    // Validasi form
-    if (!formData.petugas || !formData.area) {
-      alert("Silakan isi semua field yang diperlukan");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Cari id_ob berdasarkan nama petugas
-      const selectedOB = obList.find((ob) => ob.nama_ob === formData.petugas);
-      const id_ob = selectedOB ? selectedOB.id_ob : null;
-
-      if (!id_ob) {
-        alert("Petugas tidak ditemukan");
-        return;
+      // Cari id_ob berdasarkan nama petugas (boleh kosong)
+      let id_ob = null;
+      if (formData.petugas) {
+        const selectedOB = obList.find((ob) => ob.nama_ob === formData.petugas);
+        id_ob = selectedOB ? selectedOB.id_ob : null;
       }
 
-      // Cari id_ruangan berdasarkan area
-      const areaName = formData.area.split(" - ")[0]; // Extract nama_ruangan
-      const selectedRuangan = ruanganList.find(
-        (r) => r.nama_ruangan === areaName
-      );
-      const id_ruangan = selectedRuangan ? selectedRuangan.id_ruangan : null;
-
-      if (!id_ruangan) {
-        alert("Area tidak ditemukan");
-        return;
+      // Cari id_ruangan berdasarkan area (boleh kosong)
+      let id_ruangan = null;
+      if (formData.area) {
+        const areaName = formData.area.split(" - ")[0]; // Extract nama_ruangan
+        const selectedRuangan = ruanganList.find(
+          (r) => r.nama_ruangan === areaName
+        );
+        id_ruangan = selectedRuangan ? selectedRuangan.id_ruangan : null;
       }
 
       // Format tanggal ke YYYY-MM-DD
@@ -131,11 +120,11 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
 
       const payload = {
         id_user: user.id,
-        id_ob,
-        id_ruangan,
+        id_ob: id_ob || null,
+        id_ruangan: id_ruangan || null,
         tanggal_awal,
         tanggal_akhir,
-        shift: formData.shift,
+        shift: formData.shift || null,
         deskripsi: formData.deskripsi
       };
 
@@ -154,13 +143,6 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
         console.log("Penugasan berhasil dibuat:", response.data);
       }
 
-      // Tampilkan pesan sukses
-      alert(
-        dataEdit
-          ? "Penugasan berhasil diperbarui"
-          : "Penugasan berhasil disimpan"
-      );
-
       // Panggil callback jika ada untuk refresh data
       if (onSaveSuccess) {
         onSaveSuccess();
@@ -172,8 +154,6 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
       console.error("❌ [Frontend] Error menyimpan penugasan:", error);
       console.error("   Response:", error.response);
       console.error("   Request:", error.request);
-      const errorMessage = error.response?.data?.message || error.message || "Gagal menyimpan data";
-      alert(`Gagal menyimpan penugasan: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -252,6 +232,7 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
           <div className="form-group-item">
             <label className="label-with-icon"><FiClock /> Pilih Shift</label>
             <select name="shift" value={formData.shift} onChange={handleChange} className="custom-select">
+              <option value="">-- Pilih Shift --</option>
               <option value="Pagi">Pagi</option>
               <option value="Siang">Siang</option>
               <option value="Sore">Sore</option>

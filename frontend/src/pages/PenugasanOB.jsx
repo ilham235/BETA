@@ -1,23 +1,79 @@
-import React, { useState } from "react";
-import Sidebar from "../components/Sidebar"; 
-import TambahTugas from "./TambahTugas";
-import poto from "../assets/poto.jpg";
-import "./PenugasanOB.css";
-import Hapus from "./Delete"; // Import modal hapus
-import { 
-  FiSearch, FiPlus, FiEdit2, FiTrash2, FiChevronDown 
+import { useEffect, useState } from "react";
+import {
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2
 } from "react-icons/fi";
+import poto from "../assets/poto.jpg";
+import Sidebar from "../components/Sidebar";
+import { penugasanAPI } from "../service/api";
+import Hapus from "./Delete"; // Import modal hapus
+import "./PenugasanOB.css";
+import TambahTugas from "./TambahTugas";
 
 export default function PenugasanOB() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false); // State untuk modal hapus
   const [selectedTask, setSelectedTask] = useState(null);
+  const [dataPenugasan, setDataPenugasan] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const dataPenugasan = [
-    { id: 1, periode: "1 Feb 26 - 7 Feb 26", area: "Lantai 1 - Kantor", tugas: "Sapu Lantai", shift: "Pagi", petugas: "Ahmad Suryadi", status: "Lengkap", deskripsi: "Sapu bersih sampai pojok" },
-    { id: 2, periode: "1 Feb 26 - 7 Feb 26", area: "Lantai 1 - Toilet", tugas: "Kuras dan Sikat Toilet", shift: "Siang", petugas: "Ahmad Suryadi", status: "Lengkap", deskripsi: "Wangi karbol" },
-    { id: 3, periode: "1 Feb 26 - 7 Feb 26", area: "Lantai 1 - Kantor", tugas: "-", shift: "Siang", petugas: "Ahmad Suryadi", status: "Belum", deskripsi: "" },
-  ];
+  // Helper function untuk transform data item
+  const transformItem = (item) => {
+    const tanggalAwal = new Date(item.tanggal_awal).toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+    const tanggalAkhir = new Date(item.tanggal_akhir).toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+
+    const tugas = item.detail_pekerjaan || "-";
+    const shift = item.shift || "-";
+
+    // Tentukan status berdasarkan apakah tugas dan shift sudah diisi
+    const status = tugas !== "-" && shift !== "-" ? "Lengkap" : "Belum";
+
+    return {
+      id_penugasan: item.id_penugasan,
+      periode: `${tanggalAwal} - ${tanggalAkhir}`,
+      area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
+      tugas: tugas,
+      shift: shift,
+      petugas: item.nama_ob || "-",
+      status: status,
+      deskripsi: item.deskripsi || ""
+    };
+  };
+
+  // Fetch data dari database
+  useEffect(() => {
+    const fetchPenugasan = async () => {
+      try {
+        setLoading(true);
+        const response = await penugasanAPI.getAll();
+        
+        // Transform data dari database ke format yang sesuai dengan UI
+        const transformedData = (response.data.data || []).map(transformItem);
+
+        setDataPenugasan(transformedData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching penugasan:", err);
+        setError("Gagal memuat data penugasan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPenugasan();
+  }, []);
 
   const handleOpenAdd = () => {
     setSelectedTask(null); 
@@ -29,9 +85,52 @@ export default function PenugasanOB() {
     setIsModalOpen(true);
   };
 
+  // Refresh data setelah simpan/edit - hanya update item yang diedit tanpa ubah urutan
+  const handleSaveSuccess = async () => {
+    try {
+      // Fetch hanya data yang baru di-update (berdasarkan selectedTask ID)
+      if (selectedTask && selectedTask.id_penugasan) {
+        const response = await penugasanAPI.getAll();
+        const updatedItem = (response.data.data || []).find(
+          (item) => item.id_penugasan === selectedTask.id_penugasan
+        );
+
+        if (updatedItem) {
+          // Update hanya item yang diedit dalam state
+          const transformedUpdated = transformItem(updatedItem);
+          setDataPenugasan((prevData) =>
+            prevData.map((item) =>
+              item.id_penugasan === selectedTask.id_penugasan
+                ? transformedUpdated
+                : item
+            )
+          );
+        }
+      } else {
+        // Untuk penugasan baru, fetch semua data
+        const response = await penugasanAPI.getAll();
+        const transformedData = (response.data.data || []).map(transformItem);
+        setDataPenugasan(transformedData);
+      }
+    } catch (err) {
+      console.error("Error refreshing penugasan:", err);
+    }
+  };
+
   // Fungsi untuk membuka modal hapus
-  const handleOpenDelete = () => {
+  const handleOpenDelete = (task) => {
+    setSelectedTask(task);
     setIsDeleteOpen(true);
+  };
+
+  // Refresh data setelah delete - hapus item dari state tanpa ubah urutan
+  const handleDeleteSuccess = () => {
+    if (selectedTask && selectedTask.id_penugasan) {
+      // Hapus item dari state berdasarkan ID
+      setDataPenugasan((prevData) =>
+        prevData.filter((item) => item.id_penugasan !== selectedTask.id_penugasan)
+      );
+    }
   };
 
   return (
@@ -81,24 +180,44 @@ export default function PenugasanOB() {
                 </tr>
               </thead>
               <tbody>
-                {dataPenugasan.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.periode}</td>
-                    <td>{item.area}</td>
-                    <td>{item.tugas}</td>
-                    <td>{item.shift}</td>
-                    <td>{item.petugas}</td>
-                    <td>
-                      <span className={`badge ${item.status.toLowerCase() === 'lengkap' ? 'lengkap' : 'belum'}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="action-btns">
-                      <FiEdit2 className="edit-icon" onClick={() => handleOpenEdit(item)} style={{cursor: 'pointer'}} />
-                      <FiTrash2 className="delete-icon" onClick={handleOpenDelete} style={{cursor: 'pointer'}} />
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                      Loading data...
                     </td>
                   </tr>
-                ))}
+                ) : error ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                      {error}
+                    </td>
+                  </tr>
+                ) : dataPenugasan.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                      Tidak ada data penugasan
+                    </td>
+                  </tr>
+                ) : (
+                  dataPenugasan.map((item) => (
+                    <tr key={item.id_penugasan}>
+                      <td>{item.periode}</td>
+                      <td>{item.area}</td>
+                      <td>{item.tugas}</td>
+                      <td>{item.shift}</td>
+                      <td>{item.petugas}</td>
+                      <td>
+                        <span className={`badge ${item.status.toLowerCase() === 'lengkap' ? 'lengkap' : 'belum'}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="action-btns">
+                        <FiEdit2 className="edit-icon" onClick={() => handleOpenEdit(item)} style={{cursor: 'pointer'}} />
+                        <FiTrash2 className="delete-icon" onClick={() => handleOpenDelete(item)} style={{cursor: 'pointer'}} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -109,11 +228,16 @@ export default function PenugasanOB() {
         show={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         dataEdit={selectedTask}
+        onSaveSuccess={handleSaveSuccess}
       />
       <Hapus 
         show={isDeleteOpen} 
         onClose={() => setIsDeleteOpen(false)} 
-        onConfirm={() => setIsDeleteOpen(false)} 
+        onConfirm={() => {
+          setIsDeleteOpen(false);
+          handleDeleteSuccess(); // Hapus item dari state setelah berhasil hapus
+        }}
+        selectedTask={selectedTask}
       />
     </div>
   );

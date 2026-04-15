@@ -58,11 +58,11 @@ export const createNewPenugasan = async (req, res) => {
 
     console.log("📥 Data diterima di backend:", data);
 
-    // Validasi input
-    if (!data.id_user || !data.id_ob || !data.id_ruangan || !data.tanggal_awal) {
+    // Validasi input - hanya id_user dan tanggal_awal yang wajib
+    if (!data.id_user || !data.tanggal_awal) {
       return res.status(400).json({
         success: false,
-        message: "Data tidak lengkap. Pastikan id_user, id_ob, id_ruangan, dan tanggal_awal diisi"
+        message: "Data tidak lengkap. Pastikan id_user dan tanggal_awal diisi"
       });
     }
 
