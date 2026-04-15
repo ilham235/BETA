@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS penugasan (
   tanggal_awal DATE NOT NULL,
   tanggal_akhir DATE NOT NULL,
   kode_pengerjaan VARCHAR(50) UNIQUE,
+  shift VARCHAR(20),
+  deskripsi TEXT,
   rolling_mingguan BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

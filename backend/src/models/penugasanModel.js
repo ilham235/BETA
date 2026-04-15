@@ -52,11 +52,23 @@ export const findPenugasanById = async (id) => {
 
 export const createPenugasan = async (data) => {
   try {
+    console.log("📊 Insert Query - Data yang akan disimpan:", {
+      id_user: data.id_user,
+      id_ob: data.id_ob,
+      id_ruangan: data.id_ruangan,
+      tanggal_awal: data.tanggal_awal,
+      tanggal_akhir: data.tanggal_akhir,
+      kode_pengerjaan: data.kode_pengerjaan,
+      shift: data.shift,
+      deskripsi: data.deskripsi,
+      rolling_mingguan: data.rolling_mingguan
+    });
+
     const result = await pool.query(`
       INSERT INTO penugasan (
         id_user, id_ob, id_ruangan, tanggal_awal, tanggal_akhir,
-        kode_pengerjaan, rolling_mingguan
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        kode_pengerjaan, shift, deskripsi, rolling_mingguan
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `, [
       data.id_user,
@@ -65,8 +77,11 @@ export const createPenugasan = async (data) => {
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
+      data.shift || null,
+      data.deskripsi || null,
       data.rolling_mingguan || false
     ]);
+    console.log("✅ Data berhasil disimpan:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error("Error creating penugasan:", error);
@@ -76,6 +91,18 @@ export const createPenugasan = async (data) => {
 
 export const updatePenugasan = async (id, data) => {
   try {
+    console.log("📊 Update Query - ID:", id, "Data yang akan diupdate:", {
+      id_user: data.id_user,
+      id_ob: data.id_ob,
+      id_ruangan: data.id_ruangan,
+      tanggal_awal: data.tanggal_awal,
+      tanggal_akhir: data.tanggal_akhir,
+      kode_pengerjaan: data.kode_pengerjaan,
+      shift: data.shift,
+      deskripsi: data.deskripsi,
+      rolling_mingguan: data.rolling_mingguan
+    });
+
     const result = await pool.query(`
       UPDATE penugasan SET
         id_user = $1,
@@ -84,8 +111,10 @@ export const updatePenugasan = async (id, data) => {
         tanggal_awal = $4,
         tanggal_akhir = $5,
         kode_pengerjaan = $6,
-        rolling_mingguan = $7
-      WHERE id_penugasan = $8
+        shift = $7,
+        deskripsi = $8,
+        rolling_mingguan = $9
+      WHERE id_penugasan = $10
       RETURNING *
     `, [
       data.id_user,
@@ -94,9 +123,12 @@ export const updatePenugasan = async (id, data) => {
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
+      data.shift || null,
+      data.deskripsi || null,
       data.rolling_mingguan || false,
       id
     ]);
+    console.log("✅ Data berhasil diupdate:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error("Error updating penugasan:", error);

@@ -8,6 +8,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 🔍 DEBUG: Log SEMUA incoming requests
+app.use((req, res, next) => {
+  console.log(`📨 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log("   Headers:", req.headers);
+  console.log("   Body:", req.body);
+  next();
+});
+
 // Test route
 app.get("/test", (req, res) => {
   res.json({ message: "Test route works" });

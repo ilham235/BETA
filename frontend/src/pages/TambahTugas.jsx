@@ -10,10 +10,12 @@ import {
   FiUsers,
   FiX
 } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 import { penugasanAPI } from "../service/api";
 import "./TambahTugas.css";
 
-const TambahTugas = ({ show, onClose, dataEdit }) => {
+const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     tanggalMulai: new Date(),
     tanggalSelesai: new Date(),
@@ -25,6 +27,7 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
   });
   const [obList, setObList] = useState([]);
   const [ruanganList, setRuanganList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load OB and Ruangan data from database
   useEffect(() => {
@@ -79,6 +82,103 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
     setFormData((prev) => ({ ...prev, [name]: date }));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!user || !user.id) {
+      console.error("User tidak terautentikasi");
+      alert("Error: User tidak teridentifikasi. Silakan login kembali.");
+      return;
+    }
+
+    // Validasi form
+    if (!formData.petugas || !formData.area) {
+      alert("Silakan isi semua field yang diperlukan");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Cari id_ob berdasarkan nama petugas
+      const selectedOB = obList.find((ob) => ob.nama_ob === formData.petugas);
+      const id_ob = selectedOB ? selectedOB.id_ob : null;
+
+      if (!id_ob) {
+        alert("Petugas tidak ditemukan");
+        return;
+      }
+
+      // Cari id_ruangan berdasarkan area
+      const areaName = formData.area.split(" - ")[0]; // Extract nama_ruangan
+      const selectedRuangan = ruanganList.find(
+        (r) => r.nama_ruangan === areaName
+      );
+      const id_ruangan = selectedRuangan ? selectedRuangan.id_ruangan : null;
+
+      if (!id_ruangan) {
+        alert("Area tidak ditemukan");
+        return;
+      }
+
+      // Format tanggal ke YYYY-MM-DD
+      const tanggal_awal = formData.tanggalMulai
+        .toISOString()
+        .split("T")[0];
+      const tanggal_akhir = formData.tanggalSelesai
+        .toISOString()
+        .split("T")[0];
+
+      const payload = {
+        id_user: user.id,
+        id_ob,
+        id_ruangan,
+        tanggal_awal,
+        tanggal_akhir,
+        shift: formData.shift,
+        deskripsi: formData.deskripsi
+      };
+
+      console.log("📤 [Frontend] Payload yang akan dikirim:", payload);
+
+      let response;
+      if (dataEdit && dataEdit.id_penugasan) {
+        // Update penugasan
+        console.log("🔄 [Frontend] Melakukan UPDATE untuk ID:", dataEdit.id_penugasan);
+        response = await penugasanAPI.update(dataEdit.id_penugasan, payload);
+        console.log("Penugasan berhasil diupdate:", response.data);
+      } else {
+        // Create penugasan baru
+        console.log("➕ [Frontend] Melakukan CREATE penugasan baru");
+        response = await penugasanAPI.create(payload);
+        console.log("Penugasan berhasil dibuat:", response.data);
+      }
+
+      // Tampilkan pesan sukses
+      alert(
+        dataEdit
+          ? "Penugasan berhasil diperbarui"
+          : "Penugasan berhasil disimpan"
+      );
+
+      // Panggil callback jika ada untuk refresh data
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
+
+      // Tutup modal
+      onClose();
+    } catch (error) {
+      console.error("❌ [Frontend] Error menyimpan penugasan:", error);
+      console.error("   Response:", error.response);
+      console.error("   Request:", error.request);
+      const errorMessage = error.response?.data?.message || error.message || "Gagal menyimpan data";
+      alert(`Gagal menyimpan penugasan: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -87,7 +187,7 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
           <h2 className="modal-title">{dataEdit ? "Edit Penugasan" : "Input Penugasan"}</h2>
         </div>
 
-        <form className="modal-form-body" onSubmit={(e) => { e.preventDefault(); onClose(); }}>
+        <form className="modal-form-body" onSubmit={handleSubmit}>
           
           <div className="form-group-item">
             <label className="label-with-icon"><FiCalendar /> Pilih Periode</label>
@@ -170,8 +270,10 @@ const TambahTugas = ({ show, onClose, dataEdit }) => {
           </div>
 
           <div className="modal-footer-btns">
-            <button type="button" className="btn-modal-batal" onClick={onClose}><FiX /> Batal</button>
-            <button type="submit" className="btn-modal-simpan">Simpan</button>
+            <button type="button" className="btn-modal-batal" onClick={onClose} disabled={isLoading}><FiX /> Batal</button>
+            <button type="submit" className="btn-modal-simpan" disabled={isLoading}>
+              {isLoading ? "Menyimpan..." : "Simpan"}
+            </button>
           </div>
         </form>
       </div>

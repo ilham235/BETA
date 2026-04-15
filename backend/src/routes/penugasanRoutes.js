@@ -13,6 +13,12 @@ import {
 
 const router = express.Router();
 
+// 🔍 DEBUG: Log ke route penugasan
+router.use((req, res, next) => {
+  console.log(`🎯 Penugasan Route: ${req.method} ${req.path}`);
+  next();
+});
+
 // PENUGASAN ROUTES
 router.get("/", getPenugasan);
 router.get("/:id", getPenugasanById);

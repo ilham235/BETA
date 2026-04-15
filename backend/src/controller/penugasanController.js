@@ -56,6 +56,8 @@ export const createNewPenugasan = async (req, res) => {
   try {
     const data = req.body;
 
+    console.log("📥 Data diterima di backend:", data);
+
     // Validasi input
     if (!data.id_user || !data.id_ob || !data.id_ruangan || !data.tanggal_awal) {
       return res.status(400).json({
