@@ -1,25 +1,98 @@
-import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import poto from "../assets/poto.jpg";
-import Penilaian from "./penilaian";
-import "./Pengawasan.css";
+import { useEffect, useState } from "react";
 import {
-  FiSearch, FiChevronDown, FiStar, FiInfo
+  FiChevronDown,
+  FiInfo,
+  FiSearch,
+  FiStar
 } from "react-icons/fi";
-
-const dataTugas = [
-  { id: 1, area: "Lantai 1 - Kantor", tugas: "Sapu Lantai", shift: "Pagi", petugas: "Ahmad Suryadi", status: "Belum" },
-  { id: 2, area: "Lantai 1 - Toilet", tugas: "Kuras dan Sikat Toilet", shift: "Siang", petugas: "Ahmad Suryadi", status: "Belum" },
-  { id: 3, area: "Lantai 2 - Ruang Rapat", tugas: "Buang Sampah", shift: "Siang", petugas: "Ahmad Suryadi", status: "Belum" },
-  { id: 4, area: "Lantai 2 - Ruang Rapat", tugas: "Sapu Lantai", shift: "Pagi", petugas: "Udin Mujadi", status: "Selesai" },
-  { id: 5, area: "Lantai 2 - Ruang Rapat", tugas: "Pel Lantai", shift: "Pagi", petugas: "Udin Mujadi", status: "Selesai" },
-  { id: 6, area: "Lantai 2 - Ruang Rapat", tugas: "Lap/Rapikan Meja dan Kursi", shift: "Pagi", petugas: "Udin Mujadi", status: "Selesai" },
-];
+import poto from "../assets/poto.jpg";
+import Sidebar from "../components/Sidebar";
+import { penugasanAPI } from "../service/api";
+import "./Pengawasan.css";
+import Penilaian from "./penilaian";
 
 export default function Pengawasan() {
   const [search, setSearch] = useState("");
   const [modalNilai, setModalNilai] = useState(null); // Menyimpan data item yang akan dinilai
   const [modalDetail, setModalDetail] = useState(null);
+  const [dataTugas, setDataTugas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Helper function untuk transform data item
+  const transformItem = (item) => {
+    const tanggalAwal = new Date(item.tanggal_awal).toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+    const tanggalAkhir = new Date(item.tanggal_akhir).toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+
+    const tugas = item.detail_pekerjaan || "-";
+    const shift = item.shift || "-";
+    const petugas = item.nama_ob || "-";
+
+    // Tentukan status input tugas
+    const isComplete = [item.detail_pekerjaan, item.shift, item.nama_ob].every(
+      (field) => field && String(field).trim() !== ""
+    );
+    const statusInput = isComplete ? "Lengkap" : "Belum";
+
+    // Untuk Pengawasan, status penyelesaian awalnya "Belum"
+    const status = "Belum";
+
+    return {
+      id_penugasan: item.id_penugasan,
+      area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
+      tugas: tugas,
+      shift: shift,
+      petugas: petugas,
+      status: status,
+      statusInput: statusInput,
+      tanggalAwal: new Date(item.tanggal_awal),
+      tanggalAkhir: new Date(item.tanggal_akhir),
+      deskripsi: item.deskripsi || ""
+    };
+  };
+
+  // Fetch data dari database
+  useEffect(() => {
+    const fetchPenugasan = async () => {
+      try {
+        setLoading(true);
+        const response = await penugasanAPI.getAll();
+        
+        // Transform data dari database ke format yang sesuai dengan UI
+        const transformedData = (response.data.data || []).map(transformItem);
+
+        // Filter: hanya yang statusInput "Lengkap" dan tanggal hari ini berada dalam periode
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const filteredData = transformedData.filter((item) => {
+          const start = new Date(item.tanggalAwal);
+          const end = new Date(item.tanggalAkhir);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+
+          return item.statusInput === "Lengkap" && now >= start && now <= end;
+        });
+
+        setDataTugas(filteredData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching penugasan:", err);
+        setError("Gagal memuat data pengawasan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPenugasan();
+  }, []);
 
   const filtered = dataTugas.filter((item) =>
     item.tugas.toLowerCase().includes(search.toLowerCase()) ||
@@ -88,30 +161,50 @@ export default function Pengawasan() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.area}</td>
-                    <td>{item.tugas}</td>
-                    <td>{item.shift}</td>
-                    <td>{item.petugas}</td>
-                    <td>
-                      <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td>
-                      {item.status === "Belum" ? (
-                        <button className="btn-nilai" onClick={() => setModalNilai(item)}>
-                          <FiStar /> Nilai
-                        </button>
-                      ) : (
-                        <button className="btn-detail" onClick={() => setModalDetail(item)}>
-                          <FiInfo /> Detail
-                        </button>
-                      )}
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                      Loading data...
                     </td>
                   </tr>
-                ))}
+                ) : error ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                      {error}
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                      Tidak ada data pengawasan
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((item) => (
+                    <tr key={item.id_penugasan}>
+                      <td>{item.area}</td>
+                      <td>{item.tugas}</td>
+                      <td>{item.shift}</td>
+                      <td>{item.petugas}</td>
+                      <td>
+                        <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td>
+                        {item.status === "Belum" ? (
+                          <button className="btn-nilai" onClick={() => setModalNilai(item)}>
+                            <FiStar /> Nilai
+                          </button>
+                        ) : (
+                          <button className="btn-detail" onClick={() => setModalDetail(item)}>
+                            <FiInfo /> Detail
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

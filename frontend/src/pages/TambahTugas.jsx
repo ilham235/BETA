@@ -49,8 +49,8 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
   useEffect(() => {
     if (dataEdit) {
       setFormData({
-        tanggalMulai: new Date(), // Dummy date
-        tanggalSelesai: new Date(),
+        tanggalMulai: dataEdit.tanggalMulai ? new Date(dataEdit.tanggalMulai) : new Date(),
+        tanggalSelesai: dataEdit.tanggalSelesai ? new Date(dataEdit.tanggalSelesai) : new Date(),
         petugas: dataEdit.petugas || "",
         area: dataEdit.area || "",
         tugas: dataEdit.tugas && dataEdit.tugas !== "-" ? dataEdit.tugas : "",
@@ -82,6 +82,14 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
     setFormData((prev) => ({ ...prev, [name]: date }));
   };
 
+  const formatDateLocal = (date) => {
+    if (!date) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -110,13 +118,9 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
         id_ruangan = selectedRuangan ? selectedRuangan.id_ruangan : null;
       }
 
-      // Format tanggal ke YYYY-MM-DD
-      const tanggal_awal = formData.tanggalMulai
-        .toISOString()
-        .split("T")[0];
-      const tanggal_akhir = formData.tanggalSelesai
-        .toISOString()
-        .split("T")[0];
+      // Format tanggal ke YYYY-MM-DD tanpa offset timezone
+      const tanggal_awal = formatDateLocal(formData.tanggalMulai);
+      const tanggal_akhir = formatDateLocal(formData.tanggalSelesai);
 
       const payload = {
         id_user: user.id,

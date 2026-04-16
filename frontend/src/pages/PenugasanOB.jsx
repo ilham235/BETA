@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 import {
-    FiChevronDown,
-    FiEdit2,
-    FiPlus,
-    FiSearch,
-    FiTrash2
+  FiChevronDown,
+  FiEdit2,
+  FiPlus,
+  FiSearch,
+  FiTrash2
 } from "react-icons/fi";
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
-import Hapus from "./Delete"; // Import modal hapus
+import Hapus from "./Delete";
 import "./PenugasanOB.css";
 import TambahTugas from "./TambahTugas";
 
 export default function PenugasanOB() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false); // State untuk modal hapus
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false); 
   const [selectedTask, setSelectedTask] = useState(null);
   const [dataPenugasan, setDataPenugasan] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +36,14 @@ export default function PenugasanOB() {
 
     const tugas = item.detail_pekerjaan || "-";
     const shift = item.shift || "-";
+    const petugas = item.nama_ob || "-";
 
-    // Tentukan status berdasarkan apakah tugas dan shift sudah diisi
-    const status = tugas !== "-" && shift !== "-" ? "Lengkap" : "Belum";
+    // Tentukan status: jika ada salah satu field yang kosong atau tidak diisi, tampilkan Belum
+    const isComplete = [item.detail_pekerjaan, item.shift, item.nama_ob].every(
+      (field) => field && String(field).trim() !== ""
+    );
+    const statusInput = isComplete ? "Lengkap" : "Belum";
+    const status = statusInput;
 
     return {
       id_penugasan: item.id_penugasan,
@@ -46,8 +51,11 @@ export default function PenugasanOB() {
       area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
       tugas: tugas,
       shift: shift,
-      petugas: item.nama_ob || "-",
+      petugas: petugas,
       status: status,
+      statusInput: statusInput,
+      tanggalMulai: new Date(item.tanggal_awal),
+      tanggalSelesai: new Date(item.tanggal_akhir),
       deskripsi: item.deskripsi || ""
     };
   };
