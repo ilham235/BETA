@@ -1,0 +1,169 @@
+.modal-overlay-new {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-container-penilaian {
+  background-color: white;
+  width: 100%;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header-penilaian {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.header-icon-box {
+  background-color: #e8f5e9;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 20px;
+}
+
+.modal-header-penilaian h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.modal-form-penilaian {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group-p {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group-p label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.icon-p { margin-right: 6px; }
+.req { color: #ff4d4d; margin-left: 2px; }
+
+.input-p-disabled {
+  background-color: #f7f7f7;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #666;
+  font-size: 14px;
+}
+
+.form-select-p {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.radio-group-p {
+  display: flex;
+  gap: 15px;
+  border: 1px solid #eee;
+  padding: 8px 15px;
+  border-radius: 10px;
+}
+
+.radio-item-p { display: flex; align-items: center; cursor: pointer; }
+
+.color-box-p {
+  width: 40px; height: 18px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+.green-p { background-color: #28a745; }
+.yellow-p { background-color: #ffeb3b; }
+.red-p { background-color: #dc3545; }
+
+.upload-placeholder {
+  border: 1px dashed #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+}
+
+.modal-footer-p {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.btn-p-batal {
+  flex: 1;
+  background: white;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #333;
+}
+
+.btn-p-simpan {
+  flex: 1;
+  background-color: #008236;
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+/* Styling untuk icon gambar baru */
+.header-custom-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Styling untuk input text saat Tidak Hadir */
+.input-p-text {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background-color: #fff;
+  outline: none;
+}
+
+.input-p-text:focus {
+  border-color: #8cc697;
+}
+
+/* Efek transisi halus saat form foto muncul */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

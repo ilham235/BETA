@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import poto from "../assets/poto.jpg";
+import Penilaian from "./penilaian";
 import "./Pengawasan.css";
 import {
   FiSearch, FiChevronDown, FiStar, FiInfo
@@ -17,10 +18,8 @@ const dataTugas = [
 
 export default function Pengawasan() {
   const [search, setSearch] = useState("");
-  const [modalNilai, setModalNilai] = useState(null);
+  const [modalNilai, setModalNilai] = useState(null); // Menyimpan data item yang akan dinilai
   const [modalDetail, setModalDetail] = useState(null);
-  const [nilai, setNilai] = useState("");
-  const [catatan, setCatatan] = useState("");
 
   const filtered = dataTugas.filter((item) =>
     item.tugas.toLowerCase().includes(search.toLowerCase()) ||
@@ -102,7 +101,7 @@ export default function Pengawasan() {
                     </td>
                     <td>
                       {item.status === "Belum" ? (
-                        <button className="btn-nilai" onClick={() => { setModalNilai(item); setNilai(""); setCatatan(""); }}>
+                        <button className="btn-nilai" onClick={() => setModalNilai(item)}>
                           <FiStar /> Nilai
                         </button>
                       ) : (
@@ -119,52 +118,15 @@ export default function Pengawasan() {
         </section>
       </main>
 
-      {/* Modal Nilai */}
+      {/* Modal Nilai Menggunakan File Terpisah */}
       {modalNilai && (
-        <div className="modal-overlay" onClick={() => setModalNilai(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header-section">
-              <div className="icon-main-bg-nilai"><FiStar /></div>
-              <h2 className="modal-title">Berikan Penilaian</h2>
-              <p className="modal-subtitle">{modalNilai.tugas} — {modalNilai.area}</p>
-            </div>
-
-            <div className="form-group-item">
-              <label className="label-field">Petugas</label>
-              <input className="custom-input" value={modalNilai.petugas} readOnly />
-            </div>
-
-            <div className="form-group-item">
-              <label className="label-field">Nilai (1–100)</label>
-              <input
-                className="custom-input"
-                type="number"
-                min="1" max="100"
-                placeholder="Masukkan nilai..."
-                value={nilai}
-                onChange={(e) => setNilai(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group-item">
-              <label className="label-field">Catatan</label>
-              <textarea
-                className="custom-textarea"
-                placeholder="Tuliskan catatan penilaian..."
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-              />
-            </div>
-
-            <div className="modal-footer-btns">
-              <button className="btn-modal-batal" onClick={() => setModalNilai(null)}>Batal</button>
-              <button className="btn-modal-simpan" onClick={() => setModalNilai(null)}>Simpan Nilai</button>
-            </div>
-          </div>
-        </div>
+        <Penilaian
+          data={modalNilai} 
+          onClose={() => setModalNilai(null)} 
+        />
       )}
 
-      {/* Modal Detail */}
+      {/* Modal Detail (Tetap inline karena tidak diminta ubah) */}
       {modalDetail && (
         <div className="modal-overlay" onClick={() => setModalDetail(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
