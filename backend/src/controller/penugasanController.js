@@ -1,8 +1,10 @@
 import {
+    createLaporan,
     createOB,
     createPenugasan,
     createRuangan,
     deletePenugasan,
+    findAllLaporan,
     findAllOB,
     findAllPenugasan,
     findAllRuangan,
@@ -218,6 +220,49 @@ export const createNewRuangan = async (req, res) => {
       success: true,
       message: "Ruangan berhasil dibuat",
       data: ruangan
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// LAPORAN CRUD
+export const getLaporan = async (req, res) => {
+  try {
+    const laporan = await findAllLaporan();
+    res.json({
+      success: true,
+      data: laporan
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const createNewLaporan = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data.id_penugasan || !data.tanggal || !data.status_kehadiran || !data.nilai) {
+      return res.status(400).json({
+        success: false,
+        message: "Data tidak lengkap. Pastikan id_penugasan, tanggal, status_kehadiran, dan nilai diisi"
+      });
+    }
+
+    const laporan = await createLaporan(data);
+    res.status(201).json({
+      success: true,
+      message: "Laporan berhasil dibuat",
+      data: laporan
     });
   } catch (error) {
     console.error(error);

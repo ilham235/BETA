@@ -196,3 +196,53 @@ export const createRuangan = async (data) => {
     throw error;
   }
 };
+
+// LAPORAN functions
+export const findAllLaporan = async () => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        l.*,
+        p.kode_pengerjaan,
+        p.deskripsi as deskripsi_penugasan,
+        o.nama_ob,
+        r.nama_ruangan,
+        r.lantai
+      FROM laporan l
+      LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
+      LEFT JOIN ob o ON p.id_ob = o.id_ob
+      LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      ORDER BY l.created_at DESC
+    `);
+    return result.rows;
+  } catch (error) {
+    console.error("Error finding all laporan:", error);
+    throw error;
+  }
+};
+
+export const createLaporan = async (data) => {
+  try {
+    const result = await pool.query(`
+      INSERT INTO laporan (
+        id_penugasan, id_user_pengawas, tanggal, shift,
+        status_kehadiran, person_assigned, nilai, catatan, foto_path
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `, [
+      data.id_penugasan,
+      data.id_user_pengawas,
+      data.tanggal,
+      data.shift,
+      data.status_kehadiran,
+      data.person_assigned,
+      data.nilai,
+      data.catatan || null,
+      data.foto_path || null
+    ]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error creating laporan:", error);
+    throw error;
+  }
+};

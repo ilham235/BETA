@@ -1,9 +1,17 @@
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import path from "path";
 import readline from "readline";
+import { fileURLToPath } from "url";
 import pool from "../config/db.js";
 
-dotenv.config();
+// Setup untuk mendapatkan __dirname di ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env dari root backend directory
+const envPath = path.resolve(__dirname, "../../.env");
+dotenv.config({ path: envPath });
 
 const rl = readline.createInterface({
   input: process.stdin,
