@@ -8,6 +8,7 @@ import {
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
+import Detail from "./Detail";
 import "./Pengawasan.css";
 import Penilaian from "./penilaian";
 
@@ -16,6 +17,7 @@ export default function Pengawasan() {
   const [modalNilai, setModalNilai] = useState(null); // Menyimpan data item yang akan dinilai
   const [modalDetail, setModalDetail] = useState(null);
   const [dataTugas, setDataTugas] = useState([]);
+  const [laporanMap, setLaporanMap] = useState({}); // Map id_penugasan -> laporan data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -64,10 +66,12 @@ export default function Pengawasan() {
     const fetchPenugasan = async () => {
       try {
         setLoading(true);
-        const response = await penugasanAPI.getAll();
+        
+        // Fetch penugasan data
+        const penugasanResponse = await penugasanAPI.getAll();
         
         // Transform data dari database ke format yang sesuai dengan UI
-        const transformedData = (response.data.data || []).map(transformItem);
+        let transformedData = (penugasanResponse.data.data || []).map(transformItem);
 
         // Filter: hanya yang statusInput "Lengkap" dan tanggal hari ini berada dalam periode
         const now = new Date();
@@ -81,7 +85,30 @@ export default function Pengawasan() {
           return item.statusInput === "Lengkap" && now >= start && now <= end;
         });
 
-        setDataTugas(filteredData);
+        // Fetch semua laporan
+        try {
+          const laporanResponse = await penugasanAPI.getLaporan();
+          const laporanDataArray = laporanResponse.data.data || [];
+          
+          // Create map: id_penugasan -> laporan data
+          const laporan = {};
+          laporanDataArray.forEach(report => {
+            laporan[report.id_penugasan] = report;
+          });
+          setLaporanMap(laporan);
+
+          // Update status item berdasarkan laporan
+          const updatedData = filteredData.map(item => ({
+            ...item,
+            status: laporan[item.id_penugasan] ? "Selesai" : "Belum"
+          }));
+          
+          setDataTugas(updatedData);
+        } catch (laporanErr) {
+          console.error("Error fetching laporan:", laporanErr);
+          setDataTugas(filteredData);
+        }
+
         setError(null);
       } catch (err) {
         console.error("Error fetching penugasan:", err);
@@ -185,11 +212,27 @@ export default function Pengawasan() {
                       <td>{item.area}</td>
                       <td>{item.tugas}</td>
                       <td>{item.shift}</td>
-                      <td>{item.petugas}</td>
+                      <td>{laporanMap[item.id_penugasan]?.person_assigned || item.petugas}</td>
                       <td>
-                        <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
-                          {item.status}
-                        </span>
+                        {item.status === "Selesai" ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span className="color-box-p" style={{
+                              backgroundColor: 
+                                laporanMap[item.id_penugasan]?.nilai === "green" ? "#28a745" :
+                                laporanMap[item.id_penugasan]?.nilai === "yellow" ? "#ffeb3b" :
+                                laporanMap[item.id_penugasan]?.nilai === "red" ? "#dc3545" : "#ccc"
+                            }}></span>
+                            <span style={{ fontSize: "13px", fontWeight: "500", color: "#4a4a4a" }}>
+                              {laporanMap[item.id_penugasan]?.nilai === "green" ? "Baik" :
+                               laporanMap[item.id_penugasan]?.nilai === "yellow" ? "Cukup" :
+                               laporanMap[item.id_penugasan]?.nilai === "red" ? "Kurang" : "-"}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
+                            {item.status}
+                          </span>
+                        )}
                       </td>
                       <td>
                         {item.status === "Belum" ? (
@@ -215,49 +258,47 @@ export default function Pengawasan() {
       {modalNilai && (
         <Penilaian
           data={modalNilai} 
-          onClose={() => setModalNilai(null)} 
+          onClose={() => {
+            setModalNilai(null);
+            // Refresh data setelah simpan
+            penugasanAPI.getLaporan().then(res => {
+              const laporan = {};
+              (res.data.data || []).forEach(report => {
+                laporan[report.id_penugasan] = report;
+              });
+              setLaporanMap(laporan);
+              // Refresh penugasan juga untuk update status
+              penugasanAPI.getAllPenugasan().then(res => {
+                const filtered = (res.data.data || []).filter(item => {
+                  const tanggal = new Date(item.tanggal_awal);
+                  return tanggal >= new Date() && tanggal.getHours() <= 18;
+                });
+                setDataTugas(filtered.map(transformItem));
+              }).catch(err => console.error("Error refetching penugasan:", err));
+            }).catch(err => console.error("Error refetching laporan:", err));
+          }}
         />
       )}
 
-      {/* Modal Detail (Tetap inline karena tidak diminta ubah) */}
+      {/* Modal Detail Terpisah */}
       {modalDetail && (
-        <div className="modal-overlay" onClick={() => setModalDetail(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header-section">
-              <div className="icon-main-bg-detail"><FiInfo /></div>
-              <h2 className="modal-title">Detail Tugas</h2>
-            </div>
-
-            <div className="detail-grid">
-              <div className="detail-item">
-                <span className="detail-label">Area</span>
-                <span className="detail-value">{modalDetail.area}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Tugas</span>
-                <span className="detail-value">{modalDetail.tugas}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Shift</span>
-                <span className="detail-value">{modalDetail.shift}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Petugas</span>
-                <span className="detail-value">{modalDetail.petugas}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Status</span>
-                <span className={`status-badge ${modalDetail.status === "Selesai" ? "selesai" : "belum"}`}>
-                  {modalDetail.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="modal-footer-btns">
-              <button className="btn-modal-simpan" onClick={() => setModalDetail(null)}>Tutup</button>
-            </div>
-          </div>
-        </div>
+        <Detail
+          data={modalDetail}
+          laporanData={laporanMap[modalDetail.id_penugasan]}
+          onClose={() => setModalDetail(null)}
+          onUpdateSuccess={() => {
+            // Refresh data setelah update
+            setModalDetail(null);
+            // Re-fetch laporan
+            penugasanAPI.getLaporan().then(res => {
+              const laporan = {};
+              (res.data.data || []).forEach(report => {
+                laporan[report.id_penugasan] = report;
+              });
+              setLaporanMap(laporan);
+            }).catch(err => console.error("Error refetching laporan:", err));
+          }}
+        />
       )}
     </div>
   );

@@ -92,14 +92,30 @@
 
 .radio-item-p { display: flex; align-items: center; cursor: pointer; }
 
-.color-box-p {
-  width: 40px; height: 18px;
-  border-radius: 4px;
-  margin-left: 6px;
+.radio-item-p input[type="radio"] {
+  cursor: pointer;
+  accent-color: #999;
 }
-.green-p { background-color: #28a745; }
-.yellow-p { background-color: #ffeb3b; }
-.red-p { background-color: #dc3545; }
+
+.radio-item-p input[type="radio"][value="green"] {
+  accent-color: #28a745;
+}
+
+.radio-item-p input[type="radio"][value="yellow"] {
+  accent-color: #ffeb3b;
+}
+
+.radio-item-p input[type="radio"][value="red"] {
+  accent-color: #dc3545;
+}
+
+.color-box-p {
+  width: 24px; 
+  height: 24px;
+  border-radius: 50%;
+  margin-left: 6px;
+  display: inline-block;
+}
 
 .upload-placeholder {
   border: 1px dashed #ccc;

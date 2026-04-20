@@ -341,3 +341,11 @@
 .btn-modal-simpan:hover {
   background: #087532;
 }
+
+/* Color indicator lingkaran untuk indikator nilai */
+.color-box-p {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}

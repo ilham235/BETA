@@ -221,8 +221,45 @@ export const findAllLaporan = async () => {
   }
 };
 
+export const findLaporanByPenugasan = async (id_penugasan) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        l.*,
+        p.kode_pengerjaan,
+        p.deskripsi as deskripsi_penugasan,
+        o.nama_ob,
+        r.nama_ruangan,
+        r.lantai
+      FROM laporan l
+      LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
+      LEFT JOIN ob o ON p.id_ob = o.id_ob
+      LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      WHERE l.id_penugasan = $1
+      ORDER BY l.created_at DESC
+      LIMIT 1
+    `, [id_penugasan]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error finding laporan by penugasan:", error);
+    throw error;
+  }
+};
+
 export const createLaporan = async (data) => {
   try {
+    console.log("📊 createLaporan - Data yang akan disimpan:", {
+      id_penugasan: data.id_penugasan,
+      id_user_pengawas: data.id_user_pengawas,
+      tanggal: data.tanggal,
+      shift: data.shift,
+      status_kehadiran: data.status_kehadiran,
+      person_assigned: data.person_assigned,
+      nilai: data.nilai,
+      catatan: data.catatan,
+      foto_path_exists: !!data.foto_path
+    });
+
     const result = await pool.query(`
       INSERT INTO laporan (
         id_penugasan, id_user_pengawas, tanggal, shift,
@@ -231,18 +268,96 @@ export const createLaporan = async (data) => {
       RETURNING *
     `, [
       data.id_penugasan,
-      data.id_user_pengawas,
+      data.id_user_pengawas || null,
       data.tanggal,
-      data.shift,
+      data.shift || null,
       data.status_kehadiran,
       data.person_assigned,
-      data.nilai,
+      data.nilai || null,
       data.catatan || null,
       data.foto_path || null
     ]);
+    
+    console.log("✅ Laporan berhasil disimpan ke DB:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
-    console.error("Error creating laporan:", error);
+    console.error("❌ Error creating laporan:", error);
+    throw error;
+  }
+};
+
+// Update Laporan
+export const updateLaporan = async (id_laporan, data) => {
+  try {
+    console.log("📊 updateLaporan - Data yang akan diupdate:", {
+      id_laporan,
+      id_user_pengawas: data.id_user_pengawas,
+      shift: data.shift,
+      status_kehadiran: data.status_kehadiran,
+      person_assigned: data.person_assigned,
+      nilai: data.nilai,
+      catatan: data.catatan,
+      foto_path_exists: !!data.foto_path
+    });
+
+    // Build dynamic UPDATE query berdasarkan field yang ada
+    const updateFields = [];
+    const updateValues = [];
+    let paramCount = 1;
+
+    if (data.shift !== undefined) {
+      updateFields.push(`shift = $${paramCount++}`);
+      updateValues.push(data.shift || null);
+    }
+    if (data.status_kehadiran !== undefined) {
+      updateFields.push(`status_kehadiran = $${paramCount++}`);
+      updateValues.push(data.status_kehadiran);
+    }
+    if (data.person_assigned !== undefined) {
+      updateFields.push(`person_assigned = $${paramCount++}`);
+      updateValues.push(data.person_assigned);
+    }
+    if (data.nilai !== undefined) {
+      updateFields.push(`nilai = $${paramCount++}`);
+      updateValues.push(data.nilai || null);
+    }
+    if (data.catatan !== undefined) {
+      updateFields.push(`catatan = $${paramCount++}`);
+      updateValues.push(data.catatan || null);
+    }
+    if (data.id_user_pengawas !== undefined) {
+      updateFields.push(`id_user_pengawas = $${paramCount++}`);
+      updateValues.push(data.id_user_pengawas || null);
+    }
+    if (data.foto_path !== undefined) {
+      updateFields.push(`foto_path = $${paramCount++}`);
+      updateValues.push(data.foto_path || null);
+    }
+
+    // Add id_laporan sebagai parameter terakhir
+    updateValues.push(id_laporan);
+
+    if (updateFields.length === 0) {
+      throw new Error("Tidak ada field untuk diupdate");
+    }
+
+    const query = `
+      UPDATE laporan 
+      SET ${updateFields.join(", ")}, updated_at = NOW()
+      WHERE id_laporan = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, updateValues);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Laporan dengan ID ${id_laporan} tidak ditemukan`);
+    }
+
+    console.log("✅ Laporan berhasil diupdate:", result.rows[0]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("❌ Error updating laporan:", error);
     throw error;
   }
 };

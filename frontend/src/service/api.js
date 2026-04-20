@@ -51,6 +51,10 @@ export const penugasanAPI = {
   delete: (id) => apiClient.delete(`/penugasan/${id}`),
   getOB: () => apiClient.get("/penugasan/ob/all"),
   getRuangan: () => apiClient.get("/penugasan/ruangan/all"),
+  createLaporan: (data) => apiClient.post("/penugasan/laporan", data),
+  getLaporan: () => apiClient.get("/penugasan/laporan/all"),
+  getLaporanByPenugasan: (id_penugasan) => apiClient.get(`/penugasan/laporan/${id_penugasan}`),
+  updateLaporan: (id_laporan, data) => apiClient.put(`/penugasan/laporan/${id_laporan}`, data),
 };
 
 export default apiClient;
