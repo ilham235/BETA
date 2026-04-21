@@ -84,7 +84,7 @@ export default function Laporan() {
 
         setRiwayatTugas(transformedData);
 
-        // Calculate trend data (grouped by date)
+        // Calculate trend data (grouped by date) - berdasarkan nilai (hijau=selesai)
         const trendMap = {};
         transformedData.forEach((item) => {
           const hari = item.tanggal;
@@ -92,13 +92,13 @@ export default function Laporan() {
             trendMap[hari] = { hari, Selesai: 0, Total: 0 };
           }
           trendMap[hari].Total++;
-          if (item.status_kehadiran === "hadir") {
+          if (item.nilai === "green") {
             trendMap[hari].Selesai++;
           }
         });
         setTrendData(Object.values(trendMap).slice(0, 7));
 
-        // Calculate performa per area
+        // Calculate performa per area - berdasarkan nilai (hijau=selesai)
         const areaMap = {};
         transformedData.forEach((item) => {
           const areaName = item.area;
@@ -106,7 +106,7 @@ export default function Laporan() {
             areaMap[areaName] = { area: areaName, Selesai: 0, Total: 0 };
           }
           areaMap[areaName].Total++;
-          if (item.status_kehadiran === "hadir") {
+          if (item.nilai === "green") {
             areaMap[areaName].Selesai++;
           }
         });
@@ -114,11 +114,11 @@ export default function Laporan() {
 
         // Calculate distribusi
         const totalLaporan = transformedData.length;
-        const totalHadir = transformedData.filter(item => item.status_kehadiran === "hadir").length;
-        const totalTidakHadir = totalLaporan - totalHadir;
+        const totalSelesai = transformedData.filter(item => item.nilai === "green").length;
+        const totalBelum = totalLaporan - totalSelesai;
         setDistribusiData([
-          { name: "Hadir", value: totalHadir, color: "#0a8f3c" },
-          { name: "Tidak Hadir", value: totalTidakHadir, color: "#ef4444" }
+          { name: "Selesai", value: totalSelesai, color: "#0a8f3c" },
+          { name: "Belum Selesai", value: totalBelum, color: "#ef4444" }
         ]);
 
         // Calculate ringkasan
@@ -126,12 +126,12 @@ export default function Laporan() {
         const periodeTxt = transformedData.length > 0 
           ? `${transformedData[transformedData.length - 1].tanggal} – ${transformedData[0].tanggal}`
           : "-";
-        const avgHarian = uniqueDates.size > 0 ? Math.round(totalHadir / uniqueDates.size) : 0;
+        const avgHarian = uniqueDates.size > 0 ? Math.round(totalSelesai / uniqueDates.size) : 0;
 
         setRingkasanData({
           periode: periodeTxt,
-          totalSelesai: totalHadir,
-          totalBelum: totalTidakHadir,
+          totalSelesai: totalSelesai,
+          totalBelum: totalBelum,
           rataRataHarian: avgHarian
         });
 
@@ -175,7 +175,7 @@ export default function Laporan() {
       filtered = filtered.filter(item => item.area === filterArea);
     }
 
-    // Re-calculate analytics based on filtered data
+    // Re-calculate analytics based on filtered data - berdasarkan nilai (hijau=selesai)
     const trendMap = {};
     filtered.forEach((item) => {
       const hari = item.tanggal;
@@ -183,7 +183,7 @@ export default function Laporan() {
         trendMap[hari] = { hari, Selesai: 0, Total: 0 };
       }
       trendMap[hari].Total++;
-      if (item.status_kehadiran === "hadir") {
+      if (item.nilai === "green") {
         trendMap[hari].Selesai++;
       }
     });
@@ -196,30 +196,30 @@ export default function Laporan() {
         areaMap[areaName] = { area: areaName, Selesai: 0, Total: 0 };
       }
       areaMap[areaName].Total++;
-      if (item.status_kehadiran === "hadir") {
+      if (item.nilai === "green") {
         areaMap[areaName].Selesai++;
       }
     });
     setPerformaArea(Object.values(areaMap));
 
     const totalLaporan = filtered.length;
-    const totalHadir = filtered.filter(item => item.status_kehadiran === "hadir").length;
-    const totalTidakHadir = totalLaporan - totalHadir;
+    const totalSelesai = filtered.filter(item => item.nilai === "green").length;
+    const totalBelum = totalLaporan - totalSelesai;
     setDistribusiData([
-      { name: "Hadir", value: totalHadir, color: "#0a8f3c" },
-      { name: "Tidak Hadir", value: totalTidakHadir, color: "#ef4444" }
+      { name: "Selesai", value: totalSelesai, color: "#0a8f3c" },
+      { name: "Belum Selesai", value: totalBelum, color: "#ef4444" }
     ]);
 
     const uniqueDates = new Set(filtered.map(item => item.tanggal));
     const periodeTxt = filtered.length > 0 
       ? `${filtered[filtered.length - 1].tanggal} – ${filtered[0].tanggal}`
       : "-";
-    const avgHarian = uniqueDates.size > 0 ? Math.round(totalHadir / uniqueDates.size) : 0;
+    const avgHarian = uniqueDates.size > 0 ? Math.round(totalSelesai / uniqueDates.size) : 0;
 
     setRingkasanData({
       periode: periodeTxt,
-      totalSelesai: totalHadir,
-      totalBelum: totalTidakHadir,
+      totalSelesai: totalSelesai,
+      totalBelum: totalBelum,
       rataRataHarian: avgHarian
     });
   };
