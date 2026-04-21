@@ -23,22 +23,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// PENUGASAN ROUTES
-router.get("/", getPenugasan);
-router.get("/:id", getPenugasanById);
-router.post("/", createNewPenugasan);
-router.put("/:id", updateExistingPenugasan);
-router.delete("/:id", deleteExistingPenugasan);
-
-// OB ROUTES
-router.get("/ob/all", getOB);
-router.post("/ob", createNewOB);
-
-// RUANGAN ROUTES
-router.get("/ruangan/all", getRuangan);
-router.post("/ruangan", createNewRuangan);
-
-// LAPORAN ROUTES - ORDER MATTERS!
+// LAPORAN ROUTES - HARUS DIDEFINISIKAN PERTAMA (MORE SPECIFIC ROUTES FIRST!)
 console.log("🔧 Registering LAPORAN routes...");
 router.get("/laporan/all", getLaporan);
 console.log("✅ Registered: GET /laporan/all");
@@ -48,5 +33,20 @@ router.put("/laporan/:id_laporan", updateLaporanController);
 console.log("✅ Registered: PUT /laporan/:id_laporan");
 router.get("/laporan/:id_penugasan", getLaporanByPenugasan);
 console.log("✅ Registered: GET /laporan/:id_penugasan");
+
+// OB ROUTES
+router.get("/ob/all", getOB);
+router.post("/ob", createNewOB);
+
+// RUANGAN ROUTES
+router.get("/ruangan/all", getRuangan);
+router.post("/ruangan", createNewRuangan);
+
+// PENUGASAN ROUTES - GENERIC ROUTES COME LAST
+router.get("/", getPenugasan);
+router.post("/", createNewPenugasan);
+router.get("/:id", getPenugasanById);
+router.put("/:id", updateExistingPenugasan);
+router.delete("/:id", deleteExistingPenugasan);
 
 export default router;

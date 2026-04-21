@@ -207,7 +207,8 @@ export const findAllLaporan = async () => {
         p.deskripsi as deskripsi_penugasan,
         o.nama_ob,
         r.nama_ruangan,
-        r.lantai
+        r.lantai,
+        r.detail_pekerjaan
       FROM laporan l
       LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
       LEFT JOIN ob o ON p.id_ob = o.id_ob
@@ -230,7 +231,8 @@ export const findLaporanByPenugasan = async (id_penugasan) => {
         p.deskripsi as deskripsi_penugasan,
         o.nama_ob,
         r.nama_ruangan,
-        r.lantai
+        r.lantai,
+        r.detail_pekerjaan
       FROM laporan l
       LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
       LEFT JOIN ob o ON p.id_ob = o.id_ob

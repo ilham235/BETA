@@ -1,63 +1,271 @@
-import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import poto from "../assets/poto.jpg";
-import "./Laporan.css";
+import { useEffect, useState } from "react";
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
-} from "recharts";
-import { 
-  FiSearch, 
-  FiChevronDown, 
-  FiPrinter, 
-  FiDownload,
-  FiTrendingUp, 
-  FiBarChart2, 
-  FiPieChart, 
-  FiClipboard,
-  FiCalendar
+    FiBarChart2,
+    FiCalendar,
+    FiChevronDown,
+    FiClipboard,
+    FiDownload,
+    FiPieChart,
+    FiPrinter,
+    FiSearch,
+    FiTrendingUp
 } from "react-icons/fi";
-
-const riwayatTugas = [
-  { tanggal: "1 Feb 26", area: "Lantai 1 - Kantor", tugas: "Sapu Lantai", petugas: "Ahmad Suryadi", shift: "Pagi", status: "Selesai" },
-  { tanggal: "2 Feb 26", area: "Lantai 1 - Toilet", tugas: "Kuras dan Sikat Toilet", petugas: "Ahmad Suryadi", shift: "Siang", status: "Selesai" },
-  { tanggal: "3 Feb 26", area: "Lantai 2 - Ruang Rapat", tugas: "Buang Sampah", petugas: "Ahmad Suryadi", shift: "Siang", status: "Selesai" },
-  { tanggal: "4 Feb 26", area: "Lantai 2 - Ruang Rapat", tugas: "Sapu Lantai", petugas: "Udin Mujadi", shift: "Pagi", status: "Selesai" },
-  { tanggal: "5 Feb 26", area: "Lantai 2 - Ruang Rapat", tugas: "Pel Lantai", petugas: "Udin Mujadi", shift: "Pagi", status: "Selesai" },
-  { tanggal: "6 Feb 26", area: "Lantai 2 - Ruang Rapat", tugas: "Lap/Rapikan Meja dan Kursi", petugas: "Udin Mujadi", shift: "Pagi", status: "Belum" },
-];
-
-const trendData = [
-  { hari: "1 Feb", Selesai: 3, Total: 4 },
-  { hari: "2 Feb", Selesai: 2, Total: 3 },
-  { hari: "3 Feb", Selesai: 4, Total: 4 },
-  { hari: "4 Feb", Selesai: 1, Total: 3 },
-  { hari: "5 Feb", Selesai: 3, Total: 4 },
-  { hari: "6 Feb", Selesai: 2, Total: 4 },
-  { hari: "7 Feb", Selesai: 4, Total: 4 },
-];
-
-const performaArea = [
-  { area: "Kantor", Selesai: 3, Total: 3 },
-  { area: "Toilet", Selesai: 2, Total: 3 },
-  { area: "Rapat", Selesai: 3, Total: 3 },
-  { area: "Halaman", Selesai: 2, Total: 3 },
-  { area: "Lobby", Selesai: 3, Total: 3 },
-];
-
-const distribusiData = [
-  { name: "Selesai", value: 12, color: "#0a8f3c" },
-  { name: "Belum Selesai", value: 2, color: "#ef4444" },
-];
+import {
+    Bar,
+    BarChart,
+    Cell,
+    Legend,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis, YAxis
+} from "recharts";
+import poto from "../assets/poto.jpg";
+import Sidebar from "../components/Sidebar";
+import { penugasanAPI } from "../service/api";
+import "./Laporan.css";
 
 export default function Laporan() {
   const [search, setSearch] = useState("");
+  const [riwayatTugas, setRiwayatTugas] = useState([]);
+  const [trendData, setTrendData] = useState([]);
+  const [performaArea, setPerformaArea] = useState([]);
+  const [distribusiData, setDistribusiData] = useState([]);
+  const [ringkasanData, setRingkasanData] = useState({
+    periode: "",
+    totalSelesai: 0,
+    totalBelum: 0,
+    rataRataHarian: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Filter states
+  const [filterTanggalMulai, setFilterTanggalMulai] = useState("");
+  const [filterTanggalSelesai, setFilterTanggalSelesai] = useState("");
+  const [filterArea, setFilterArea] = useState(""); // "" = semua area
+  const [allAreas, setAllAreas] = useState([]);
 
-  const filtered = riwayatTugas.filter((item) =>
-    item.tugas.toLowerCase().includes(search.toLowerCase()) ||
-    item.area.toLowerCase().includes(search.toLowerCase()) ||
-    item.petugas.toLowerCase().includes(search.toLowerCase())
-  );
+  // Fetch laporan data
+  useEffect(() => {
+    const fetchLaporanData = async () => {
+      try {
+        setLoading(true);
+        const response = await penugasanAPI.getLaporan();
+        const laporanList = response.data.data || [];
+
+        // Transform data dari laporan ke format untuk ditampilkan
+        const transformedData = laporanList.map((item) => {
+          const tanggalFormatted = new Date(item.tanggal).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: '2-digit'
+          });
+          
+          return {
+            id_laporan: item.id_laporan,
+            tanggal: tanggalFormatted,
+            tanggalRaw: new Date(item.tanggal),
+            area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
+            tugas: item.detail_pekerjaan || item.deskripsi_penugasan || "-",
+            petugas: item.person_assigned || item.nama_ob || "-",
+            shift: item.shift || "-",
+            status_kehadiran: item.status_kehadiran,
+            nilai: item.nilai,
+            status: item.status_kehadiran === "hadir" ? "Hadir" : "Tidak Hadir"
+          };
+        });
+
+        // Sort by tanggal (newest first)
+        transformedData.sort((a, b) => b.tanggalRaw - a.tanggalRaw);
+
+        setRiwayatTugas(transformedData);
+
+        // Calculate trend data (grouped by date)
+        const trendMap = {};
+        transformedData.forEach((item) => {
+          const hari = item.tanggal;
+          if (!trendMap[hari]) {
+            trendMap[hari] = { hari, Selesai: 0, Total: 0 };
+          }
+          trendMap[hari].Total++;
+          if (item.status_kehadiran === "hadir") {
+            trendMap[hari].Selesai++;
+          }
+        });
+        setTrendData(Object.values(trendMap).slice(0, 7));
+
+        // Calculate performa per area
+        const areaMap = {};
+        transformedData.forEach((item) => {
+          const areaName = item.area;
+          if (!areaMap[areaName]) {
+            areaMap[areaName] = { area: areaName, Selesai: 0, Total: 0 };
+          }
+          areaMap[areaName].Total++;
+          if (item.status_kehadiran === "hadir") {
+            areaMap[areaName].Selesai++;
+          }
+        });
+        setPerformaArea(Object.values(areaMap));
+
+        // Calculate distribusi
+        const totalLaporan = transformedData.length;
+        const totalHadir = transformedData.filter(item => item.status_kehadiran === "hadir").length;
+        const totalTidakHadir = totalLaporan - totalHadir;
+        setDistribusiData([
+          { name: "Hadir", value: totalHadir, color: "#0a8f3c" },
+          { name: "Tidak Hadir", value: totalTidakHadir, color: "#ef4444" }
+        ]);
+
+        // Calculate ringkasan
+        const uniqueDates = new Set(transformedData.map(item => item.tanggal));
+        const periodeTxt = transformedData.length > 0 
+          ? `${transformedData[transformedData.length - 1].tanggal} – ${transformedData[0].tanggal}`
+          : "-";
+        const avgHarian = uniqueDates.size > 0 ? Math.round(totalHadir / uniqueDates.size) : 0;
+
+        setRingkasanData({
+          periode: periodeTxt,
+          totalSelesai: totalHadir,
+          totalBelum: totalTidakHadir,
+          rataRataHarian: avgHarian
+        });
+
+        // JANGAN set default filter dates - biarkan user memilih
+        // Hanya extract unique areas
+        const uniqueAreas = [...new Set(transformedData.map(item => item.area).filter(a => a !== "-"))];
+        setAllAreas(uniqueAreas);
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching laporan:", err);
+        setError("Gagal memuat data laporan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLaporanData();
+  }, []);
+
+  // Apply filters setiap ada perubahan
+  const applyFilters = () => {
+    let filtered = riwayatTugas;
+
+    // Filter by tanggal mulai
+    if (filterTanggalMulai) {
+      const startDate = new Date(filterTanggalMulai);
+      startDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(item => item.tanggalRaw >= startDate);
+    }
+
+    // Filter by tanggal selesai
+    if (filterTanggalSelesai) {
+      const endDate = new Date(filterTanggalSelesai);
+      endDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(item => item.tanggalRaw <= endDate);
+    }
+
+    // Filter by area
+    if (filterArea) {
+      filtered = filtered.filter(item => item.area === filterArea);
+    }
+
+    // Re-calculate analytics based on filtered data
+    const trendMap = {};
+    filtered.forEach((item) => {
+      const hari = item.tanggal;
+      if (!trendMap[hari]) {
+        trendMap[hari] = { hari, Selesai: 0, Total: 0 };
+      }
+      trendMap[hari].Total++;
+      if (item.status_kehadiran === "hadir") {
+        trendMap[hari].Selesai++;
+      }
+    });
+    setTrendData(Object.values(trendMap).slice(0, 7));
+
+    const areaMap = {};
+    filtered.forEach((item) => {
+      const areaName = item.area;
+      if (!areaMap[areaName]) {
+        areaMap[areaName] = { area: areaName, Selesai: 0, Total: 0 };
+      }
+      areaMap[areaName].Total++;
+      if (item.status_kehadiran === "hadir") {
+        areaMap[areaName].Selesai++;
+      }
+    });
+    setPerformaArea(Object.values(areaMap));
+
+    const totalLaporan = filtered.length;
+    const totalHadir = filtered.filter(item => item.status_kehadiran === "hadir").length;
+    const totalTidakHadir = totalLaporan - totalHadir;
+    setDistribusiData([
+      { name: "Hadir", value: totalHadir, color: "#0a8f3c" },
+      { name: "Tidak Hadir", value: totalTidakHadir, color: "#ef4444" }
+    ]);
+
+    const uniqueDates = new Set(filtered.map(item => item.tanggal));
+    const periodeTxt = filtered.length > 0 
+      ? `${filtered[filtered.length - 1].tanggal} – ${filtered[0].tanggal}`
+      : "-";
+    const avgHarian = uniqueDates.size > 0 ? Math.round(totalHadir / uniqueDates.size) : 0;
+
+    setRingkasanData({
+      periode: periodeTxt,
+      totalSelesai: totalHadir,
+      totalBelum: totalTidakHadir,
+      rataRataHarian: avgHarian
+    });
+  };
+
+  // Trigger filter apply when any filter changes
+  useEffect(() => {
+    applyFilters();
+  }, [filterTanggalMulai, filterTanggalSelesai, filterArea, riwayatTugas]);
+
+  const filtered = riwayatTugas.filter((item) => {
+    // Terapkan filter tanggal
+    let matchesDate = true;
+    if (filterTanggalMulai) {
+      const startDate = new Date(filterTanggalMulai);
+      matchesDate = item.tanggalRaw >= startDate;
+    }
+    if (filterTanggalSelesai && matchesDate) {
+      const endDate = new Date(filterTanggalSelesai);
+      endDate.setHours(23, 59, 59, 999);
+      matchesDate = item.tanggalRaw <= endDate;
+    }
+
+    // Terapkan filter area
+    let matchesArea = !filterArea || item.area === filterArea;
+
+    // Terapkan search
+    const matchesSearch = 
+      item.tugas.toLowerCase().includes(search.toLowerCase()) ||
+      item.area.toLowerCase().includes(search.toLowerCase()) ||
+      item.petugas.toLowerCase().includes(search.toLowerCase());
+
+    return matchesDate && matchesArea && matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <main className="main-content">
+          <div style={{ padding: "20px", textAlign: "center" }}>
+            <p>⏳ Memuat data laporan...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -98,24 +306,55 @@ export default function Laporan() {
             <div className="filter-grid">
               <div className="filter-item">
                 <label>Tanggal Mulai</label>
-                <div className="filter-select">
-                  <span>1 Februari 2026</span>
-                  <FiChevronDown />
-                </div>
+                <input
+                  type="date"
+                  value={filterTanggalMulai}
+                  onChange={(e) => setFilterTanggalMulai(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "14px"
+                  }}
+                />
               </div>
               <div className="filter-item">
                 <label>Tanggal Selesai</label>
-                <div className="filter-select">
-                  <span>7 Februari 2026</span>
-                  <FiChevronDown />
-                </div>
+                <input
+                  type="date"
+                  value={filterTanggalSelesai}
+                  onChange={(e) => setFilterTanggalSelesai(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "14px"
+                  }}
+                />
               </div>
               <div className="filter-item">
                 <label>Filter Area</label>
-                <div className="filter-select">
-                  <span>Semua Area</span>
-                  <FiChevronDown />
-                </div>
+                <select
+                  value={filterArea}
+                  onChange={(e) => setFilterArea(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "14px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <option value="">Semua Area</option>
+                  {allAreas.map((area, idx) => (
+                    <option key={idx} value={area}>
+                      {area}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -145,20 +384,34 @@ export default function Laporan() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item, i) => (
-                  <tr key={i}>
-                    <td>{item.tanggal}</td>
-                    <td>{item.area}</td>
-                    <td>{item.tugas}</td>
-                    <td>{item.petugas}</td>
-                    <td>{item.shift}</td>
-                    <td>
-                      <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
-                        {item.status}
-                      </span>
+                {error ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#d32f2f" }}>
+                      ❌ {error}
                     </td>
                   </tr>
-                ))}
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
+                      Tidak ada data laporan
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((item, i) => (
+                    <tr key={item.id_laporan || i}>
+                      <td>{item.tanggal}</td>
+                      <td>{item.area}</td>
+                      <td>{item.tugas}</td>
+                      <td>{item.petugas}</td>
+                      <td>{item.shift}</td>
+                      <td>
+                        <span className={`status-badge ${item.status_kehadiran === "hadir" ? "selesai" : "belum"}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -203,23 +456,23 @@ export default function Laporan() {
                 <div className="icon-box"><FiPieChart /></div>
                 <h3>Distribusi Penyelesaian</h3>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart margin={{ top: 30, right: 80, bottom: 30, left: 80 }}>
                   <Pie
                     data={distribusiData}
-                    cx="50%"
+                    cx="40%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
+                    innerRadius={50}
+                    outerRadius={75}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
+                    label={({ name, percent }) => `${name}\n${(percent * 100).toFixed(0)}%`}
+                    labelLine={true}
+                    labelPosition="right"
                   >
                     {distribusiData.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -232,19 +485,19 @@ export default function Laporan() {
               <div className="ringkasan-list">
                 <div className="ringkasan-item">
                   <span className="ringkasan-label">Periode Laporan</span>
-                  <span className="ringkasan-value green">1 Feb – 7 Feb 2026</span>
+                  <span className="ringkasan-value green">{ringkasanData.periode || "-"}</span>
                 </div>
                 <div className="ringkasan-item">
-                  <span className="ringkasan-label">Total Tugas Selesai</span>
-                  <span className="ringkasan-value green">12 tugas</span>
+                  <span className="ringkasan-label">Total Tugas Hadir</span>
+                  <span className="ringkasan-value green">{ringkasanData.totalSelesai} tugas</span>
                 </div>
                 <div className="ringkasan-item">
-                  <span className="ringkasan-label">Total Tugas Belum Selesai</span>
-                  <span className="ringkasan-value green">2 tugas</span>
+                  <span className="ringkasan-label">Total Tugas Tidak Hadir</span>
+                  <span className="ringkasan-value green">{ringkasanData.totalBelum} tugas</span>
                 </div>
                 <div className="ringkasan-item">
                   <span className="ringkasan-label">Rata-rata Harian</span>
-                  <span className="ringkasan-value green">2 tugas/hari</span>
+                  <span className="ringkasan-value green">{ringkasanData.rataRataHarian} tugas/hari</span>
                 </div>
               </div>
             </div>

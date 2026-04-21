@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FiCamera, FiClipboard, FiClock, FiMapPin, FiUser } from "react-icons/fi";
 import IconPenilaian from "../assets/Icon.png"; // Pastikan path file benar
 import { useAuth } from "../context/AuthContext";
@@ -16,15 +16,52 @@ const Penilaian = ({ data, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [existingLaporan, setExistingLaporan] = useState(null); // Track existing laporan
+  const [isLoadingLaporan, setIsLoadingLaporan] = useState(true);
+
+  // Load laporan yang sudah ada untuk penugasan ini
+  useEffect(() => {
+    const loadExistingLaporan = async () => {
+      try {
+        const idPenugasan = data?.id || data?.id_penugasan;
+        if (!idPenugasan) {
+          setIsLoadingLaporan(false);
+          return;
+        }
+
+        const response = await penugasanAPI.getLaporanByPenugasan(idPenugasan);
+        if (response.data.success && response.data.data) {
+          const laporan = response.data.data;
+          setExistingLaporan(laporan);
+          
+          // Pre-fill form dengan data laporan yang sudah ada
+          setStatusKehadiran(laporan.status_kehadiran || "hadir");
+          setSelectedNilai(laporan.nilai || "");
+          setNamaPetugas(laporan.person_assigned || data?.petugas || "");
+        }
+      } catch (err) {
+        // Laporan tidak ada, ini normal untuk penugasan baru
+        console.log("ℹ️ Laporan belum ada untuk penugasan ini (normal untuk data baru)");
+      } finally {
+        setIsLoadingLaporan(false);
+      }
+    };
+
+    if (data) {
+      loadExistingLaporan();
+    }
+  }, [data]);
 
   // Auto-update nama petugas saat status kehadiran berubah
   useEffect(() => {
     if (statusKehadiran === "hadir") {
       setNamaPetugas(data?.petugas || "");
-    } else {
+    } else if (!namaPetugas && !existingLaporan) {
+      // Jika tidak ada laporan existing, reset nama petugas
       setNamaPetugas("");
     }
-  }, [statusKehadiran, data?.petugas]);
+    // Jika ada laporan existing, jangan reset
+  }, [statusKehadiran, data?.petugas, existingLaporan]);
 
   const today = new Date().toLocaleDateString("id-ID", {
     weekday: "long", day: "2-digit", month: "long", year: "numeric"
@@ -75,8 +112,9 @@ const Penilaian = ({ data, onClose }) => {
       // Debug: cek user data
       console.log("👤 User data:", user);
       console.log("📋 Data yang diterima dari prop:", data);
+      console.log("📋 Laporan existing:", existingLaporan);
 
-      // Siapkan data untuk dikirim
+      // Siapkan data untuk dikirim (struktur sama dengan PenugasanOB)
       const laporanData = {
         id_penugasan: data?.id || data?.id_penugasan,
         tanggal: new Date().toISOString().split('T')[0],
@@ -93,11 +131,20 @@ const Penilaian = ({ data, onClose }) => {
       }
 
       console.log("📤 Data laporan yang dikirim:", laporanData);
-      console.log("� Foto file:", fotoBukti ? fotoBukti.name : "tidak ada");
+      console.log("📷 Foto file:", fotoBukti ? fotoBukti.name : "tidak ada");
       console.log("💾 Foto path di DB:", fotoPath);
 
-      // Kirim data ke backend
-      const response = await penugasanAPI.createLaporan(laporanData);
+      // Tentukan apakah CREATE atau UPDATE
+      let response;
+      if (existingLaporan && existingLaporan.id_laporan) {
+        // LAPORAN SUDAH ADA - UPDATE
+        console.log("🔄 UPDATE laporan dengan ID:", existingLaporan.id_laporan);
+        response = await penugasanAPI.updateLaporan(existingLaporan.id_laporan, laporanData);
+      } else {
+        // LAPORAN BELUM ADA - CREATE
+        console.log("✨ CREATE laporan baru");
+        response = await penugasanAPI.createLaporan(laporanData);
+      }
 
       if (response.data.success) {
         setSuccess(true);
@@ -281,17 +328,17 @@ const Penilaian = ({ data, onClose }) => {
           )}
 
           <div className="modal-footer-p">
-            <button type="button" className="btn-p-batal" onClick={onClose} disabled={loading}>
+            <button type="button" className="btn-p-batal" onClick={onClose} disabled={loading || isLoadingLaporan}>
               ✕ Batal
             </button>
             <button 
               type="button" 
               className="btn-p-simpan" 
               onClick={handleSimpan}
-              disabled={loading}
-              style={{ opacity: loading ? 0.6 : 1 }}
+              disabled={loading || isLoadingLaporan}
+              style={{ opacity: loading || isLoadingLaporan ? 0.6 : 1 }}
             >
-              {loading ? "⏳ Menyimpan..." : "✓ Simpan"}
+              {loading ? "⏳ Menyimpan..." : existingLaporan ? "✓ Update" : "✓ Simpan"}
             </button>
           </div>
         </form>
