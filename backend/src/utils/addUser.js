@@ -26,10 +26,11 @@ async function addUser() {
 
     let username = await question("Username: ");
     const password = await question("Password: ");
-    const nama_lengkap = await question("Nama Lengkap (opsional): ");
+    let nama_lengkap = await question("Nama Lengkap (opsional): ");
     const role = await question('Role (user/admin) [default: user]: ') || "user";
 
     username = username?.trim();
+    nama_lengkap = nama_lengkap?.trim() || "User"; // Default value jika kosong
 
     // Validasi
     if (!username || !password) {
@@ -59,7 +60,7 @@ async function addUser() {
     // Simpan ke database
     const result = await pool.query(
       "INSERT INTO users (username, password, nama_lengkap, role) VALUES ($1, $2, $3, $4) RETURNING id_user, username, nama_lengkap, role",
-      [username, hashedPassword, nama_lengkap || null, role]
+      [username, hashedPassword, nama_lengkap, role]
     );
 
     console.log("\n✅ User berhasil ditambahkan!");
