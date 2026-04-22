@@ -449,6 +449,15 @@ td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f7fafc; }
   display: flex;
   align-items: center;
   gap: 15px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.shift-item.active {
+  background-color: #f0fdf4;
+  border-left: 3px solid #0a8f3c;
+  padding-left: 12px;
 }
 
 .shift-img-icon {
@@ -464,6 +473,13 @@ td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f7fafc; }
   font-size: 14px;
   font-weight: 600;
   margin: 0;
+}
+
+.shift-time {
+  font-size: 13px;
+  color: #718096;
+  margin: 2px 0;
+  font-weight: 500;
 }
 
 .shift-timer {

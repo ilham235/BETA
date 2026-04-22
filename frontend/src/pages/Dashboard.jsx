@@ -1,23 +1,155 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PieChart } from 'react-minimal-pie-chart';
-import Sidebar from "../components/Sidebar"; // Import Sidebar baru
-import poto from "../assets/poto.jpg";
 import iconPagi from "../assets/pagi.png";
+import poto from "../assets/poto.jpg";
 import iconSiang from "../assets/siang.png";
 import iconSore from "../assets/sore.png";
+import Sidebar from "../components/Sidebar"; // Import Sidebar baru
+import { useAuth } from "../context/AuthContext";
+import { penugasanAPI } from "../service/api";
 import "./Dashboard.css";
 import TambahTugas from "./TambahTugas";
 
 import {
-  FiArrowUpRight, FiChevronDown,
-  FiChevronRight,
-  FiPlus,
-  FiSearch,
-  FiLayout
+    FiArrowUpRight, FiChevronDown,
+    FiChevronRight,
+    FiLayout,
+    FiPlus,
+    FiSearch
 } from "react-icons/fi";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [penugasanList, setPenugasanList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    tugasHariIni: 0,
+    areaTercover: 0,
+    tugasSelesai: 0,
+    progressPercentage: 0
+  });
+
+  const { user } = useAuth();
+
+  // Fetch penugasan data
+  useEffect(() => {
+    const fetchPenugasan = async () => {
+      try {
+        setLoading(true);
+        const response = await penugasanAPI.getAll();
+        
+        if (response.data.success) {
+          const data = response.data.data || [];
+          setPenugasanList(data);
+          
+          console.log("Data from API:", data);
+          
+          // Tugas yang belum selesai / aktif
+          const tugasAktif = data.filter(item => 
+            item.status !== 'selesai' && item.status !== 'Selesai'
+          ).length;
+
+          // Area tercover (jumlah ruangan unik)
+          const areaTercover = new Set(data.filter(item => item.id_ruangan).map(item => item.id_ruangan)).size;
+
+          // Tugas selesai
+          const tugasSelesai = data.filter(item => item.status === 'selesai' || item.status === 'Selesai').length;
+
+          // Progress percentage
+          const progressPercentage = data.length > 0 
+            ? Math.round((tugasSelesai / data.length) * 100)
+            : 0;
+
+          console.log("Stats:", { tugasAktif, areaTercover, tugasSelesai, progressPercentage });
+
+          setStats({
+            tugasHariIni: tugasAktif,
+            areaTercover,
+            tugasSelesai,
+            progressPercentage
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching penugasan:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPenugasan();
+  }, []);
+
+  // Format tanggal
+  const formatDate = (dateString) => {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  };
+
+  // Format status
+  const getStatusClass = (status) => {
+    if (!status) return 'belum';
+    return status.toLowerCase() === 'selesai' ? 'selesai' : 'belum';
+  };
+
+  // Shift configuration
+  const shifts = [
+    { name: 'Pagi', start: '07:00', end: '10:30', icon: iconPagi },
+    { name: 'Siang', start: '10:30', end: '14:00', icon: iconSiang },
+    { name: 'Sore', start: '14:00', end: '17:00', icon: iconSore }
+  ];
+
+  // Helper function to get current shift and time remaining
+  const getShiftStatus = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute; // Total minutes
+
+    return shifts.map(shift => {
+      const [startHour, startMinute] = shift.start.split(':').map(Number);
+      const [endHour, endMinute] = shift.end.split(':').map(Number);
+      
+      const startTime = startHour * 60 + startMinute;
+      const endTime = endHour * 60 + endMinute;
+
+      const isActive = currentTime >= startTime && currentTime < endTime;
+      
+      let timeRemaining = 0;
+      if (isActive) {
+        timeRemaining = endTime - currentTime; // Minutes remaining
+      } else if (currentTime < startTime) {
+        timeRemaining = startTime - currentTime; // Time until shift starts
+      } else {
+        timeRemaining = 0; // Shift already ended
+      }
+
+      // Convert minutes to HH:MM:SS format
+      const hours = Math.floor(timeRemaining / 60);
+      const minutes = timeRemaining % 60;
+      const seconds = 0;
+      const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      return {
+        ...shift,
+        isActive,
+        timeRemaining: formattedTime,
+        isEnded: currentTime >= endTime
+      };
+    });
+  };
+
+  const [shiftStatus, setShiftStatus] = useState(getShiftStatus());
+
+  // Update shift status every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShiftStatus(getShiftStatus());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -33,8 +165,8 @@ export default function Dashboard() {
           <div className="user-profile">
             <img src={poto} alt="avatar" className="avatar" />
             <div className="user-info">
-              <p className="user-name">Wowo</p>
-              <p className="user-role">Pengawas</p>
+              <p className="user-name">{user?.nama_lengkap || user?.username || "User"}</p>
+              <p className="user-role">{user?.role || "Pengawas"}</p>
             </div>
             <FiChevronDown className="dropdown-icon" />
           </div>
@@ -49,13 +181,13 @@ export default function Dashboard() {
           <div className="stats-grid">
             <div className="stat-card green">
               <div className="stat-header">
-                <p>Tugas Hari Ini</p>
+                <p>Tugas Aktif</p>
                 <div className="stat-icon-circle"><FiArrowUpRight /></div>
               </div>
-              <h2>8</h2>
+              <h2>{stats.tugasHariIni}</h2>
               <div className="stat-footer">
-                <p className="footer-main">Tugas Hari Ini</p>
-                <p className="footer-sub">+4 dari kemarin</p>
+                <p className="footer-main">Tugas Belum Selesai</p>
+                <p className="footer-sub">Dari {penugasanList.length} Total Tugas</p>
               </div>
             </div>
 
@@ -64,10 +196,10 @@ export default function Dashboard() {
                 <p>Area Tercover</p>
                 <div className="stat-icon-circle border"><FiArrowUpRight /></div>
               </div>
-              <h2>2</h2>
+              <h2>{stats.areaTercover}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Area dcheck</p>
-                <p className="footer-sub">Tersisa 3</p>
+                <p className="footer-sub">Total Area: {penugasanList.length > 0 ? penugasanList.length : '0'}</p>
               </div>
             </div>
 
@@ -76,10 +208,10 @@ export default function Dashboard() {
                 <p>Tugas Selesai</p>
                 <div className="stat-icon-circle border"><FiArrowUpRight /></div>
               </div>
-              <h2>4</h2>
+              <h2>{stats.tugasSelesai}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Tugas diselesaikan</p>
-                <p className="footer-sub">Tersisa 4</p>
+                <p className="footer-sub">Tersisa {penugasanList.length - stats.tugasSelesai}</p>
               </div>
             </div>
 
@@ -98,7 +230,7 @@ export default function Dashboard() {
                   className="gauge-bg"
                 />
                 <PieChart
-                  data={[{ value: 80, color: '#0a8f3c' }]} 
+                  data={[{ value: stats.progressPercentage, color: '#0a8f3c' }]}
                   totalValue={100}
                   lineWidth={25}
                   startAngle={180}
@@ -122,8 +254,8 @@ export default function Dashboard() {
             <div className="table-container">
               <div className="table-header">
                 <div className="header-left">
-                  <h3>Tugas Hari Ini</h3>
-                  <p className="table-date">Senin, 01 Februari 2026</p>
+                  <h3>Daftar Tugas</h3>
+                  <p className="table-date">{formatDate(new Date())}</p>
                 </div>
                 <div className="table-actions">
                   <div className="small-search">
@@ -146,20 +278,35 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>Lantai 2 - Ruang Rapat</td>
-                    <td>Sapu Lantai</td>
-                    <td>Pagi</td>
-                    <td>Udin Mujadi</td>
-                    <td><span className="status selesai">Selesai</span></td>
-                  </tr>
-                  <tr>
-                    <td>Lantai 1 - Kantor</td>
-                    <td>Sapu Lantai</td>
-                    <td>Pagi</td>
-                    <td>Ahmad Suryadi</td>
-                    <td><span className="status belum">Belum</span></td>
-                  </tr>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        Loading data...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                        Error: {error}
+                      </td>
+                    </tr>
+                  ) : penugasanList.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        Tidak ada tugas
+                      </td>
+                    </tr>
+                  ) : (
+                    penugasanList.slice(0, 5).map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.nama_ruangan || 'N/A'} - Lantai {item.lantai || 'N/A'}</td>
+                        <td>{item.detail_pekerjaan || 'N/A'}</td>
+                        <td>{item.shift || 'N/A'}</td>
+                        <td>{item.nama_lengkap || item.username || 'N/A'}</td>
+                        <td><span className={`status ${getStatusClass(item.status)}`}>{item.status || 'Belum'}</span></td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
               <div className="see-more">Lihat Selengkapnya <FiChevronRight /></div>
@@ -172,27 +319,16 @@ export default function Dashboard() {
                   <div className="icon-arrow-circle"><FiArrowUpRight /></div>
                 </div>
                 <div className="shift-list">
-                  <div className="shift-item">
-                    <img src={iconPagi} alt="Pagi" className="shift-img-icon" />
-                    <div className="shift-info">
-                      <p className="shift-name">Shift Pagi</p>
-                      <p className="shift-timer">00:20:00 Sisa</p>
+                  {shiftStatus.map((shift, index) => (
+                    <div key={index} className={`shift-item ${shift.isEnded ? 'disabled' : ''} ${shift.isActive ? 'active' : ''}`}>
+                      <img src={shift.icon} alt={shift.name} className="shift-img-icon" />
+                      <div className="shift-info">
+                        <p className="shift-name">Shift {shift.name}</p>
+                        <p className="shift-time">{shift.start} - {shift.end}</p>
+                        <p className="shift-timer">{shift.timeRemaining} {shift.isActive ? 'Sisa' : shift.isEnded ? 'Selesai' : 'Dimulai'}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="shift-item disabled">
-                    <img src={iconSiang} alt="Siang" className="shift-img-icon" />
-                    <div className="shift-info">
-                      <p className="shift-name">Shift Siang</p>
-                      <p className="shift-timer">00:00:00 Sisa</p>
-                    </div>
-                  </div>
-                  <div className="shift-item disabled">
-                    <img src={iconSore} alt="Sore" className="shift-img-icon" />
-                    <div className="shift-info">
-                      <p className="shift-name">Shift Sore</p>
-                      <p className="shift-timer">00:00:00 Sisa</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
               <div className="report-card">
