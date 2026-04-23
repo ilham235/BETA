@@ -29,12 +29,13 @@ const Penilaian = ({ data, onClose }) => {
           return;
         }
 
-        const response = await penugasanAPI.getLaporanByPenugasan(idPenugasan);
+        const todayString = new Date().toLocaleDateString('en-CA');
+        const response = await penugasanAPI.getLaporanByPenugasan(idPenugasan, todayString);
         if (response.data.success && response.data.data) {
           const laporan = response.data.data;
           setExistingLaporan(laporan);
           
-          // Pre-fill form dengan data laporan yang sudah ada
+          // Pre-fill form dengan data laporan hari ini yang sudah ada
           setStatusKehadiran(laporan.status_kehadiran || "hadir");
           setSelectedNilai(laporan.nilai || "");
           setNamaPetugas(laporan.person_assigned || data?.petugas || "");

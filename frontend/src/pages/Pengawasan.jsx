@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  FiChevronDown,
-  FiInfo,
-  FiSearch,
-  FiStar
+    FiChevronDown,
+    FiInfo,
+    FiSearch,
+    FiStar
 } from "react-icons/fi";
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
@@ -85,9 +85,10 @@ export default function Pengawasan() {
           return item.statusInput === "Lengkap" && now >= start && now <= end;
         });
 
-        // Fetch semua laporan
+        // Fetch semua laporan hanya untuk tanggal hari ini
         try {
-          const laporanResponse = await penugasanAPI.getLaporan();
+          const todayString = new Date().toLocaleDateString('en-CA');
+          const laporanResponse = await penugasanAPI.getLaporan(todayString);
           const laporanDataArray = laporanResponse.data.data || [];
           
           // Create map: id_penugasan -> laporan data
@@ -97,10 +98,10 @@ export default function Pengawasan() {
           });
           setLaporanMap(laporan);
 
-          // Update status item berdasarkan laporan
+          // Update status item berdasarkan laporan hari ini
           const updatedData = filteredData.map(item => ({
             ...item,
-            status: laporan[item.id_penugasan] ? "Selesai" : "Belum"
+            status: laporan[item.id_penugasan] ? "Selesai" : ""
           }));
           
           setDataTugas(updatedData);
@@ -229,19 +230,17 @@ export default function Pengawasan() {
                             </span>
                           </div>
                         ) : (
-                          <span className={`status-badge ${item.status === "Selesai" ? "selesai" : "belum"}`}>
-                            {item.status}
-                          </span>
+                          <span>&nbsp;</span>
                         )}
                       </td>
                       <td>
-                        {item.status === "Belum" ? (
-                          <button className="btn-nilai" onClick={() => setModalNilai(item)}>
-                            <FiStar /> Nilai
-                          </button>
-                        ) : (
+                        {item.status === "Selesai" ? (
                           <button className="btn-detail" onClick={() => setModalDetail(item)}>
                             <FiInfo /> Detail
+                          </button>
+                        ) : (
+                          <button className="btn-nilai" onClick={() => setModalNilai(item)}>
+                            <FiStar /> Nilai
                           </button>
                         )}
                       </td>

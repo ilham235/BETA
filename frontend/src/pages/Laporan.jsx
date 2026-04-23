@@ -43,10 +43,14 @@ export default function Laporan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Filter states
-  const [filterTanggalMulai, setFilterTanggalMulai] = useState("");
-  const [filterTanggalSelesai, setFilterTanggalSelesai] = useState("");
+  // Filter states - set default to today for mulai, empty for selesai
+  const [filterTanggalMulai, setFilterTanggalMulai] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+  });
+  const [filterTanggalSelesai, setFilterTanggalSelesai] = useState(""); // Kosongkan default agar bisa filter tanggal mulai saja
   const [filterArea, setFilterArea] = useState(""); // "" = semua area
+  const [filteredData, setFilteredData] = useState([]);
   const [allAreas, setAllAreas] = useState([]);
 
   // Fetch laporan data
@@ -54,7 +58,28 @@ export default function Laporan() {
     const fetchLaporanData = async () => {
       try {
         setLoading(true);
-        const response = await penugasanAPI.getLaporan();
+        // Jika ada filter tanggal, fetch dengan parameter tanggal
+        let response;
+        if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
+            filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+          // Jika ada range tanggal yang berbeda, fetch semua data dan filter client-side
+          response = await penugasanAPI.getLaporan();
+        } else if (filterTanggalMulai && filterTanggalMulai.trim() !== "" && 
+                   (!filterTanggalSelesai || filterTanggalSelesai.trim() === "")) {
+          // Jika hanya ada tanggal mulai (tanpa tanggal selesai), fetch data untuk tanggal mulai saja
+          response = await penugasanAPI.getLaporan(filterTanggalMulai);
+        } else if (filterTanggalSelesai && filterTanggalSelesai.trim() !== "" && 
+                   (!filterTanggalMulai || filterTanggalMulai.trim() === "")) {
+          // Jika hanya ada tanggal selesai (tanpa tanggal mulai), fetch data untuk tanggal selesai saja
+          response = await penugasanAPI.getLaporan(filterTanggalSelesai);
+        } else if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai === filterTanggalSelesai && 
+                   filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+          // Jika tanggal mulai dan selesai sama, fetch data untuk tanggal tersebut
+          response = await penugasanAPI.getLaporan(filterTanggalMulai);
+        } else {
+          // Jika tidak ada filter tanggal yang valid, fetch semua data
+          response = await penugasanAPI.getLaporan();
+        }
         const laporanList = response.data.data || [];
 
         // Transform data dari laporan ke format untuk ditampilkan
@@ -135,8 +160,8 @@ export default function Laporan() {
           rataRataHarian: avgHarian
         });
 
-        // JANGAN set default filter dates - biarkan user memilih
-        // Hanya extract unique areas
+        // Set default filter: tanggal mulai = today, tanggal selesai = kosong (untuk filter tanggal mulai saja)
+        // Extract unique areas
         const uniqueAreas = [...new Set(transformedData.map(item => item.area).filter(a => a !== "-"))];
         setAllAreas(uniqueAreas);
 
@@ -150,34 +175,13 @@ export default function Laporan() {
     };
 
     fetchLaporanData();
-  }, []);
+  }, [filterTanggalMulai, filterTanggalSelesai]); // Refetch when date filters change
 
-  // Apply filters setiap ada perubahan
-  const applyFilters = () => {
-    let filtered = riwayatTugas;
-
-    // Filter by tanggal mulai
-    if (filterTanggalMulai) {
-      const startDate = new Date(filterTanggalMulai);
-      startDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter(item => item.tanggalRaw >= startDate);
-    }
-
-    // Filter by tanggal selesai
-    if (filterTanggalSelesai) {
-      const endDate = new Date(filterTanggalSelesai);
-      endDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(item => item.tanggalRaw <= endDate);
-    }
-
-    // Filter by area
-    if (filterArea) {
-      filtered = filtered.filter(item => item.area === filterArea);
-    }
-
-    // Re-calculate analytics based on filtered data - berdasarkan nilai (hijau=selesai)
+  // Fungsi untuk menghitung analytics berdasarkan data yang sudah difilter
+  const calculateAnalytics = (filteredData) => {
+    // Calculate trend data (grouped by date) - berdasarkan nilai (hijau=selesai)
     const trendMap = {};
-    filtered.forEach((item) => {
+    filteredData.forEach((item) => {
       const hari = item.tanggal;
       if (!trendMap[hari]) {
         trendMap[hari] = { hari, Selesai: 0, Total: 0 };
@@ -189,8 +193,9 @@ export default function Laporan() {
     });
     setTrendData(Object.values(trendMap).slice(0, 7));
 
+    // Calculate performa per area - berdasarkan nilai (hijau=selesai)
     const areaMap = {};
-    filtered.forEach((item) => {
+    filteredData.forEach((item) => {
       const areaName = item.area;
       if (!areaMap[areaName]) {
         areaMap[areaName] = { area: areaName, Selesai: 0, Total: 0 };
@@ -202,17 +207,19 @@ export default function Laporan() {
     });
     setPerformaArea(Object.values(areaMap));
 
-    const totalLaporan = filtered.length;
-    const totalSelesai = filtered.filter(item => item.nilai === "green").length;
+    // Calculate distribusi
+    const totalLaporan = filteredData.length;
+    const totalSelesai = filteredData.filter(item => item.nilai === "green").length;
     const totalBelum = totalLaporan - totalSelesai;
     setDistribusiData([
       { name: "Selesai", value: totalSelesai, color: "#0a8f3c" },
       { name: "Belum Selesai", value: totalBelum, color: "#ef4444" }
     ]);
 
-    const uniqueDates = new Set(filtered.map(item => item.tanggal));
-    const periodeTxt = filtered.length > 0 
-      ? `${filtered[filtered.length - 1].tanggal} – ${filtered[0].tanggal}`
+    // Calculate ringkasan
+    const uniqueDates = new Set(filteredData.map(item => item.tanggal));
+    const periodeTxt = filteredData.length > 0 
+      ? `${filteredData[filteredData.length - 1].tanggal} – ${filteredData[0].tanggal}`
       : "-";
     const avgHarian = uniqueDates.size > 0 ? Math.round(totalSelesai / uniqueDates.size) : 0;
 
@@ -224,35 +231,73 @@ export default function Laporan() {
     });
   };
 
+  // Apply filters setiap ada perubahan
+  const applyFilters = () => {
+    let filtered = riwayatTugas;
+
+    // Filter by tanggal mulai (hanya untuk range tanggal yang valid dan berbeda)
+    if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
+        filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+      const startDate = new Date(filterTanggalMulai);
+      startDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(item => item.tanggalRaw >= startDate);
+    }
+
+    // Filter by tanggal selesai (hanya untuk range tanggal yang valid dan berbeda)
+    if (filterTanggalSelesai && filterTanggalMulai && filterTanggalMulai !== filterTanggalSelesai &&
+        filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+      const endDate = new Date(filterTanggalSelesai);
+      endDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(item => item.tanggalRaw <= endDate);
+    }
+
+    // Filter by area
+    if (filterArea) {
+      filtered = filtered.filter(item => item.area === filterArea);
+    }
+
+    // Hitung analytics berdasarkan data yang sudah difilter (tanpa search)
+    calculateAnalytics(filtered);
+  };
+
   // Trigger filter apply when any filter changes
   useEffect(() => {
     applyFilters();
   }, [filterTanggalMulai, filterTanggalSelesai, filterArea, riwayatTugas]);
 
-  const filtered = riwayatTugas.filter((item) => {
-    // Terapkan filter tanggal
-    let matchesDate = true;
-    if (filterTanggalMulai) {
-      const startDate = new Date(filterTanggalMulai);
-      matchesDate = item.tanggalRaw >= startDate;
-    }
-    if (filterTanggalSelesai && matchesDate) {
-      const endDate = new Date(filterTanggalSelesai);
-      endDate.setHours(23, 59, 59, 999);
-      matchesDate = item.tanggalRaw <= endDate;
-    }
+  // Hitung ulang analytics ketika filtered data berubah (termasuk search)
+  useEffect(() => {
+    const filtered = riwayatTugas.filter((item) => {
+      // Terapkan filter tanggal (hanya untuk range tanggal yang valid dan berbeda)
+      let matchesDate = true;
+      if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
+          filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+        const startDate = new Date(filterTanggalMulai);
+        matchesDate = item.tanggalRaw >= startDate;
+      }
+      if (filterTanggalSelesai && filterTanggalMulai && filterTanggalMulai !== filterTanggalSelesai && 
+          filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "" && matchesDate) {
+        const endDate = new Date(filterTanggalSelesai);
+        endDate.setHours(23, 59, 59, 999);
+        matchesDate = item.tanggalRaw <= endDate;
+      }
 
-    // Terapkan filter area
-    let matchesArea = !filterArea || item.area === filterArea;
+      // Terapkan filter area
+      let matchesArea = !filterArea || item.area === filterArea;
 
-    // Terapkan search
-    const matchesSearch = 
-      item.tugas.toLowerCase().includes(search.toLowerCase()) ||
-      item.area.toLowerCase().includes(search.toLowerCase()) ||
-      item.petugas.toLowerCase().includes(search.toLowerCase());
+      // Terapkan search
+      const matchesSearch = 
+        item.tugas.toLowerCase().includes(search.toLowerCase()) ||
+        item.area.toLowerCase().includes(search.toLowerCase()) ||
+        item.petugas.toLowerCase().includes(search.toLowerCase());
 
-    return matchesDate && matchesArea && matchesSearch;
-  });
+      return matchesDate && matchesArea && matchesSearch;
+    });
+
+    // Update filtered data dan hitung analytics
+    setFilteredData(filtered);
+    calculateAnalytics(filtered);
+  }, [filterTanggalMulai, filterTanggalSelesai, filterArea, search, riwayatTugas]);
 
   if (loading) {
     return (
@@ -390,14 +435,14 @@ export default function Laporan() {
                       ❌ {error}
                     </td>
                   </tr>
-                ) : filtered.length === 0 ? (
+                ) : filteredData.length === 0 ? (
                   <tr>
                     <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
                       Tidak ada data laporan
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((item, i) => (
+                  filteredData.map((item, i) => (
                     <tr key={item.id_laporan || i}>
                       <td>{item.tanggal}</td>
                       <td>{item.area}</td>

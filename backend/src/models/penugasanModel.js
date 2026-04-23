@@ -198,9 +198,9 @@ export const createRuangan = async (data) => {
 };
 
 // LAPORAN functions
-export const findAllLaporan = async () => {
+export const findAllLaporan = async (tanggal) => {
   try {
-    const result = await pool.query(`
+    const query = `
       SELECT
         l.*,
         p.kode_pengerjaan,
@@ -213,8 +213,11 @@ export const findAllLaporan = async () => {
       LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      ${tanggal ? "WHERE DATE(l.tanggal) = $1" : ""}
       ORDER BY l.created_at DESC
-    `);
+    `;
+    const params = tanggal ? [tanggal] : [];
+    const result = await pool.query(query, params);
     return result.rows;
   } catch (error) {
     console.error("Error finding all laporan:", error);
@@ -222,9 +225,9 @@ export const findAllLaporan = async () => {
   }
 };
 
-export const findLaporanByPenugasan = async (id_penugasan) => {
+export const findLaporanByPenugasan = async (id_penugasan, tanggal) => {
   try {
-    const result = await pool.query(`
+    const query = `
       SELECT
         l.*,
         p.kode_pengerjaan,
@@ -238,9 +241,12 @@ export const findLaporanByPenugasan = async (id_penugasan) => {
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
       WHERE l.id_penugasan = $1
+      ${tanggal ? "AND DATE(l.tanggal) = $2" : ""}
       ORDER BY l.created_at DESC
       LIMIT 1
-    `, [id_penugasan]);
+    `;
+    const params = tanggal ? [id_penugasan, tanggal] : [id_penugasan];
+    const result = await pool.query(query, params);
     return result.rows[0];
   } catch (error) {
     console.error("Error finding laporan by penugasan:", error);

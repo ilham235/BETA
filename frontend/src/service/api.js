@@ -52,8 +52,12 @@ export const penugasanAPI = {
   getOB: () => apiClient.get("/penugasan/ob/all"),
   getRuangan: () => apiClient.get("/penugasan/ruangan/all"),
   createLaporan: (data) => apiClient.post("/penugasan/laporan", data),
-  getLaporan: () => apiClient.get("/penugasan/laporan/all"),
-  getLaporanByPenugasan: (id_penugasan) => apiClient.get(`/penugasan/laporan/${id_penugasan}`),
+  getLaporan: (tanggal) => apiClient.get("/penugasan/laporan/all", {
+    params: tanggal ? { tanggal } : {}
+  }),
+  getLaporanByPenugasan: (id_penugasan, tanggal) => apiClient.get(`/penugasan/laporan/${id_penugasan}`, {
+    params: tanggal ? { tanggal } : {}
+  }),
   updateLaporan: (id_laporan, data) => apiClient.put(`/penugasan/laporan/${id_laporan}`, data),
 };
 

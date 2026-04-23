@@ -235,7 +235,8 @@ export const createNewRuangan = async (req, res) => {
 // LAPORAN CRUD
 export const getLaporan = async (req, res) => {
   try {
-    const laporan = await findAllLaporan();
+    const tanggal = req.query.tanggal;
+    const laporan = await findAllLaporan(tanggal);
     res.json({
       success: true,
       data: laporan
@@ -252,7 +253,8 @@ export const getLaporan = async (req, res) => {
 export const getLaporanByPenugasan = async (req, res) => {
   try {
     const { id_penugasan } = req.params;
-    const laporan = await findLaporanByPenugasan(id_penugasan);
+    const tanggal = req.query.tanggal;
+    const laporan = await findLaporanByPenugasan(id_penugasan, tanggal);
     
     if (!laporan) {
       return res.status(404).json({
