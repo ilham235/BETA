@@ -28,6 +28,147 @@ import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
 import "./Laporan.css";
 
+// Fungsi untuk export ke format Excel (XLSX)
+const exportToExcel = (data, format = 'xlsx', fileName = 'laporan_kebersihan') => {
+  if (!data || data.length === 0) {
+    alert("Tidak ada data untuk diekspor");
+    return;
+  }
+
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+
+  if (format === 'xlsx') {
+    // Export ke format XLSX (XML Spreadsheet) dengan border dan auto-width
+    const headers = ["Tanggal", "Area", "Tugas", "Petugas", "Shift", "Status"];
+    
+    // Hitung lebar kolom berdasarkan konten
+    const colWidths = headers.map((h, i) => {
+      let maxLen = h.length;
+      data.forEach(item => {
+        const rowData = [item.tanggal || "", item.area || "", item.tugas || "", item.petugas || "", item.shift || "", item.status || ""];
+        const len = String(rowData[i]).length;
+        if (len > maxLen) maxLen = Math.min(len, 50); // Batasi max 50 karakter
+      });
+      // Konversi ke pixel (approx 8px per karakter, min 50px, max 200px)
+      return Math.min(Math.max(maxLen * 8 + 20, 50), 200);
+    });
+    
+    // Style untuk header dan data cell dengan border
+    const headerStyle = 'ss:StyleID="s1"';
+    const cellStyle = 'ss:StyleID="s2"';
+    
+    let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="s1">
+   <Font ss:Bold="1"/>
+   <Interior ss:Color="#E8F0FE" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="s2">
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Laporan Kebersihan">
+  <Table>
+   <Column ss:Index="1" ss:Width="${colWidths[0]}"/>
+   <Column ss:Index="2" ss:Width="${colWidths[1]}"/>
+   <Column ss:Index="3" ss:Width="${colWidths[2]}"/>
+   <Column ss:Index="4" ss:Width="${colWidths[3]}"/>
+   <Column ss:Index="5" ss:Width="${colWidths[4]}"/>
+   <Column ss:Index="6" ss:Width="${colWidths[5]}"/>`;
+    
+    // Header row dengan style
+    xmlContent += `<Row>`;
+    headers.forEach(header => {
+      xmlContent += `<Cell ${headerStyle}><Data ss:Type="String">${header}</Data></Cell>`;
+    });
+    xmlContent += `</Row>`;
+    
+    // Data rows dengan style dan border
+    data.forEach(item => {
+      xmlContent += `<Row>`;
+      const rowData = [
+        item.tanggal || "",
+        item.area || "",
+        item.tugas || "",
+        item.petugas || "",
+        item.shift || "",
+        item.status || ""
+      ];
+      rowData.forEach(field => {
+        const value = String(field).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        xmlContent += `<Cell ${cellStyle}><Data ss:Type="String">${value}</Data></Cell>`;
+      });
+      xmlContent += `</Row>`;
+    });
+    
+    xmlContent += `</Table></Worksheet></Workbook>`;
+    
+    const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${fileName}_${dateStr}.xls`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+  } else {
+    // Export ke format CSV
+    const headers = ["Tanggal", "Area", "Tugas", "Petugas", "Shift", "Status"];
+    const csvContent = [];
+    
+    csvContent.push(headers.join(","));
+    
+    data.forEach(item => {
+      const row = [
+        item.tanggal || "",
+        item.area || "",
+        item.tugas || "",
+        item.petugas || "",
+        item.shift || "",
+        item.status || ""
+      ];
+      const escapedRow = row.map(field => {
+        const value = String(field);
+        if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      });
+      csvContent.push(escapedRow.join(","));
+    });
+    
+    const csvString = csvContent.join("\n");
+    const blob = new Blob(["\ufeff" + csvString], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${fileName}_${dateStr}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
+
 export default function Laporan() {
   const [search, setSearch] = useState("");
   const [riwayatTugas, setRiwayatTugas] = useState([]);
@@ -340,7 +481,9 @@ export default function Laporan() {
             </div>
             <div className="laporan-actions">
               <button className="btn-cetak"><FiPrinter /> Cetak PDF</button>
-              <button className="btn-unduh"><FiDownload /> Unduh Excel</button>
+              <button className="btn-unduh" onClick={() => exportToExcel(filteredData, 'xlsx', 'laporan_kebersihan')}>
+                <FiDownload /> Unduh Excel
+              </button>
             </div>
           </div>
 
