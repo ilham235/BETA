@@ -417,48 +417,50 @@ export default function Laporan() {
                 />
               </div>
             </div>
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th>Area</th>
-                  <th>Tugas</th>
-                  <th>Petugas</th>
-                  <th>Shift</th>
-                  <th>Keterangan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {error ? (
+            <div className="table-scroll-container">
+              <table className="custom-table">
+                <thead>
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#d32f2f" }}>
-                      ❌ {error}
-                    </td>
+                    <th>Tanggal</th>
+                    <th>Area</th>
+                    <th>Tugas</th>
+                    <th>Petugas</th>
+                    <th>Shift</th>
+                    <th>Keterangan</th>
                   </tr>
-                ) : filteredData.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
-                      Tidak ada data laporan
-                    </td>
-                  </tr>
-                ) : (
-                  filteredData.map((item, i) => (
-                    <tr key={item.id_laporan || i}>
-                      <td>{item.tanggal}</td>
-                      <td>{item.area}</td>
-                      <td>{item.tugas}</td>
-                      <td>{item.petugas}</td>
-                      <td>{item.shift}</td>
-                      <td>
-                        <span className={`status-badge ${item.status_kehadiran === "hadir" ? "selesai" : "belum"}`}>
-                          {item.status}
-                        </span>
+                </thead>
+                <tbody>
+                  {error ? (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#d32f2f" }}>
+                        ❌ {error}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
+                        Tidak ada data laporan
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((item, i) => (
+                      <tr key={item.id_laporan || i}>
+                        <td>{item.tanggal}</td>
+                        <td>{item.area}</td>
+                        <td>{item.tugas}</td>
+                        <td>{item.petugas}</td>
+                        <td>{item.shift}</td>
+                        <td>
+                          <span className={`status-badge ${item.status_kehadiran === "hadir" ? "selesai" : "belum"}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="charts-grid">

@@ -148,6 +148,30 @@
   width: 100%;
 }
 
+.table-scroll-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
 .custom-table {
   width: 100%;
   border-collapse: collapse;
@@ -160,6 +184,10 @@
   font-weight: 700;
   border-bottom: 1px solid #f0f0f0;
   font-size: 14px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
 }
 
 .custom-table td {

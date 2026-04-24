@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PieChart } from 'react-minimal-pie-chart';
+import { useNavigate } from "react-router-dom";
 import iconPagi from "../assets/pagi.png";
 import poto from "../assets/poto.jpg";
 import iconSiang from "../assets/siang.png";
@@ -29,8 +30,10 @@ export default function Dashboard() {
     tugasSelesai: 0,
     progressPercentage: 0
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch penugasan data
   useEffect(() => {
@@ -260,9 +263,16 @@ export default function Dashboard() {
                 <div className="table-actions">
                   <div className="small-search">
                     <FiSearch />
-                    <input type="text" placeholder="Cari tugas..." />
+                    <input 
+                      type="text" 
+                      placeholder="Cari tugas..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
-                  <button className="btn-monitoring"><FiLayout /> Monitoring</button>
+                  <button className="btn-monitoring" onClick={() => navigate('/pengawasan')}>
+                    <FiLayout /> Monitoring
+                  </button>
                   <button className="btn-add" onClick={()=> setIsModalOpen(true)}><FiPlus /> Tambah Tugas</button>
                 </div>
               </div>
@@ -297,7 +307,18 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ) : (
-                    penugasanList.slice(0, 5).map((item, index) => (
+                    penugasanList
+                      .filter(item => {
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        return (
+                          (item.nama_ruangan || '').toLowerCase().includes(query) ||
+                          (item.detail_pekerjaan || '').toLowerCase().includes(query) ||
+                          (item.nama_lengkap || item.username || '').toLowerCase().includes(query)
+                        );
+                      })
+                      .slice(0, 5)
+                      .map((item, index) => (
                       <tr key={index}>
                         <td>{item.nama_ruangan || 'N/A'} - Lantai {item.lantai || 'N/A'}</td>
                         <td>{item.detail_pekerjaan || 'N/A'}</td>
@@ -309,7 +330,9 @@ export default function Dashboard() {
                   )}
                 </tbody>
               </table>
-              <div className="see-more">Lihat Selengkapnya <FiChevronRight /></div>
+              <div className="see-more" onClick={() => navigate('/penugasan')} style={{ cursor: 'pointer' }}>
+                Lihat Selengkapnya <FiChevronRight />
+              </div>
             </div>
 
             <div className="widgets">
