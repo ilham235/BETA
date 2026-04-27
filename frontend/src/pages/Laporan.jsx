@@ -1,35 +1,36 @@
 import { useEffect, useState } from "react";
 import {
-    FiBarChart2,
-    FiCalendar,
-    FiChevronDown,
-    FiClipboard,
-    FiDownload,
-    FiPieChart,
-    FiPrinter,
-    FiSearch,
-    FiTrendingUp
+  FiBarChart2,
+  FiCalendar,
+  FiChevronDown,
+  FiClipboard,
+  FiDownload,
+  FiPieChart,
+  FiPrinter,
+  FiSearch,
+  FiTrendingUp
 } from "react-icons/fi";
 import {
-    Bar,
-    BarChart,
-    Cell,
-    Legend,
-    Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis, YAxis
+  Bar,
+  BarChart,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis, YAxis
 } from "recharts";
+import * as XLSX from "xlsx-js-style";
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
 import "./Laporan.css";
 
-// Fungsi untuk export ke format Excel (XLSX)
-const exportToExcel = (data, format = 'xlsx', fileName = 'laporan_kebersihan') => {
+// Fungsi untuk export ke format Excel (XLSX) dengan border dan auto width
+const exportToExcel = (data, trendData = [], performaArea = [], distribusiData = [], ringkasanData = {}, format = 'xlsx', fileName = 'laporan_kebersihan') => {
   if (!data || data.length === 0) {
     alert("Tidak ada data untuk diekspor");
     return;
@@ -39,71 +40,14 @@ const exportToExcel = (data, format = 'xlsx', fileName = 'laporan_kebersihan') =
   const dateStr = now.toISOString().split('T')[0];
 
   if (format === 'xlsx') {
-    // Export ke format XLSX (XML Spreadsheet) dengan border dan auto-width
+    const wb = XLSX.utils.book_new();
+
+    // ==================== SHEET 1: DATA LAPORAN ====================
     const headers = ["Tanggal", "Area", "Tugas", "Petugas", "Shift", "Status"];
+    const wsData = [headers];
     
-    // Hitung lebar kolom berdasarkan konten
-    const colWidths = headers.map((h, i) => {
-      let maxLen = h.length;
-      data.forEach(item => {
-        const rowData = [item.tanggal || "", item.area || "", item.tugas || "", item.petugas || "", item.shift || "", item.status || ""];
-        const len = String(rowData[i]).length;
-        if (len > maxLen) maxLen = Math.min(len, 50); // Batasi max 50 karakter
-      });
-      // Konversi ke pixel (approx 8px per karakter, min 50px, max 200px)
-      return Math.min(Math.max(maxLen * 8 + 20, 50), 200);
-    });
-    
-    // Style untuk header dan data cell dengan border
-    const headerStyle = 'ss:StyleID="s1"';
-    const cellStyle = 'ss:StyleID="s2"';
-    
-    let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Styles>
-  <Style ss:ID="s1">
-   <Font ss:Bold="1"/>
-   <Interior ss:Color="#E8F0FE" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-  </Style>
-  <Style ss:ID="s2">
-   <Borders>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-  </Style>
- </Styles>
- <Worksheet ss:Name="Laporan Kebersihan">
-  <Table>
-   <Column ss:Index="1" ss:Width="${colWidths[0]}"/>
-   <Column ss:Index="2" ss:Width="${colWidths[1]}"/>
-   <Column ss:Index="3" ss:Width="${colWidths[2]}"/>
-   <Column ss:Index="4" ss:Width="${colWidths[3]}"/>
-   <Column ss:Index="5" ss:Width="${colWidths[4]}"/>
-   <Column ss:Index="6" ss:Width="${colWidths[5]}"/>`;
-    
-    // Header row dengan style
-    xmlContent += `<Row>`;
-    headers.forEach(header => {
-      xmlContent += `<Cell ${headerStyle}><Data ss:Type="String">${header}</Data></Cell>`;
-    });
-    xmlContent += `</Row>`;
-    
-    // Data rows dengan style dan border
     data.forEach(item => {
-      xmlContent += `<Row>`;
-      const rowData = [
+      const row = [
         item.tanggal || "",
         item.area || "",
         item.tugas || "",
@@ -111,24 +55,308 @@ const exportToExcel = (data, format = 'xlsx', fileName = 'laporan_kebersihan') =
         item.shift || "",
         item.status || ""
       ];
-      rowData.forEach(field => {
-        const value = String(field).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        xmlContent += `<Cell ${cellStyle}><Data ss:Type="String">${value}</Data></Cell>`;
-      });
-      xmlContent += `</Row>`;
+      wsData.push(row);
     });
     
-    xmlContent += `</Table></Worksheet></Workbook>`;
+    const wsLaporan = XLSX.utils.aoa_to_sheet(wsData);
     
-    const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${fileName}_${dateStr}.xls`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Auto width - hitung lebar kolom berdasarkan konten
+    const colWidths = headers.map((h, i) => {
+      let maxLen = h.length;
+      data.forEach(item => {
+        const rowData = [item.tanggal || "", item.area || "", item.tugas || "", item.petugas || "", item.shift || "", item.status || ""];
+        const len = String(rowData[i]).length;
+        if (len > maxLen) maxLen = Math.min(len, 80);
+      });
+      return { wch: maxLen + 3 };
+    });
+    wsLaporan['!cols'] = colWidths;
+    
+    // Tambahkan border dan style ke semua cell
+    const range = XLSX.utils.decode_range(wsLaporan['!ref']);
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!wsLaporan[cellRef]) continue;
+        
+        if (R === 0) {
+          wsLaporan[cellRef].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "E8F0FE" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } }
+            }
+          };
+        } else {
+          wsLaporan[cellRef].s = {
+            alignment: { horizontal: "left", vertical: "center", wrapText: true },
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } }
+            }
+          };
+        }
+      }
+    }
+    
+    XLSX.utils.book_append_sheet(wb, wsLaporan, "Data Laporan");
+
+    // ==================== SHEET 2: TREND TUGAS HARIAN ====================
+    if (trendData.length > 0) {
+      const trendHeaders = ["Tanggal", "Selesai", "Total"];
+      const trendWsData = [trendHeaders];
+      
+      trendData.forEach(item => {
+        trendWsData.push([item.hari || item.Tanggal || "", item.Selesai || 0, item.Total || 0]);
+      });
+      
+      const wsTrend = XLSX.utils.aoa_to_sheet(trendWsData);
+      
+      // Auto width untuk trend
+      const trendColWidths = trendHeaders.map((h, i) => {
+        let maxLen = h.length;
+        trendData.forEach(item => {
+          const values = [item.hari || item.Tanggal || "", item.Selesai || 0, item.Total || 0];
+          const len = String(values[i]).length;
+          if (len > maxLen) maxLen = Math.min(len, 30);
+        });
+        return { wch: maxLen + 3 };
+      });
+      wsTrend['!cols'] = trendColWidths;
+      
+      // Border untuk sheet trend
+      const trendRange = XLSX.utils.decode_range(wsTrend['!ref']);
+      for (let R = trendRange.s.r; R <= trendRange.e.r; R++) {
+        for (let C = trendRange.s.c; C <= trendRange.e.c; C++) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!wsTrend[cellRef]) continue;
+          
+          if (R === 0) {
+            wsTrend[cellRef].s = {
+              font: { bold: true },
+              fill: { fgColor: { rgb: "E8F0FE" } },
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          } else {
+            wsTrend[cellRef].s = {
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          }
+        }
+      }
+      
+      XLSX.utils.book_append_sheet(wb, wsTrend, "Trend Tugas Harian");
+    }
+
+    // ==================== SHEET 3: PERFORMA PER AREA ====================
+    if (performaArea.length > 0) {
+      const areaHeaders = ["Area", "Selesai", "Total", "Persentase"];
+      const areaWsData = [areaHeaders];
+      
+      performaArea.forEach(item => {
+        const persentase = item.Total > 0 ? Math.round((item.Selesai / item.Total) * 100) : 0;
+        areaWsData.push([item.area || "", item.Selesai || 0, item.Total || 0, `${persentase}%`]);
+      });
+      
+      const wsArea = XLSX.utils.aoa_to_sheet(areaWsData);
+      
+      // Auto width untuk area
+      const areaColWidths = areaHeaders.map((h, i) => {
+        let maxLen = h.length;
+        performaArea.forEach(item => {
+          const persentase = item.Total > 0 ? Math.round((item.Selesai / item.Total) * 100) : 0;
+          const values = [item.area || "", item.Selesai || 0, item.Total || 0, `${persentase}%`];
+          const len = String(values[i]).length;
+          if (len > maxLen) maxLen = Math.min(len, 40);
+        });
+        return { wch: maxLen + 3 };
+      });
+      wsArea['!cols'] = areaColWidths;
+      
+      // Border untuk sheet area
+      const areaRange = XLSX.utils.decode_range(wsArea['!ref']);
+      for (let R = areaRange.s.r; R <= areaRange.e.r; R++) {
+        for (let C = areaRange.s.c; C <= areaRange.e.c; C++) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!wsArea[cellRef]) continue;
+          
+          if (R === 0) {
+            wsArea[cellRef].s = {
+              font: { bold: true },
+              fill: { fgColor: { rgb: "E8F0FE" } },
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          } else {
+            wsArea[cellRef].s = {
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          }
+        }
+      }
+      
+      XLSX.utils.book_append_sheet(wb, wsArea, "Performa Per Area");
+    }
+
+    // ==================== SHEET 4: DISTRIBUSI PENYELESAIAN ====================
+    if (distribusiData.length > 0) {
+      const distHeaders = ["Status", "Jumlah"];
+      const distWsData = [distHeaders];
+      
+      distribusiData.forEach(item => {
+        distWsData.push([item.name || "", item.value || 0]);
+      });
+      
+      // Tambahkan total
+      const total = distribusiData.reduce((sum, item) => sum + (item.value || 0), 0);
+      distWsData.push(["TOTAL", total]);
+      
+      const wsDist = XLSX.utils.aoa_to_sheet(distWsData);
+      
+      // Auto width untuk distribusi
+      const distColWidths = distHeaders.map((h, i) => {
+        let maxLen = h.length;
+        distribusiData.forEach(item => {
+          const values = [item.name || "", item.value || 0];
+          const len = String(values[i]).length;
+          if (len > maxLen) maxLen = Math.min(len, 20);
+        });
+        maxLen = Math.max(maxLen, 10); // Min width untuk "TOTAL"
+        return { wch: maxLen + 3 };
+      });
+      distColWidths.push({ wch: 15 }); // Kolom untuk total
+      wsDist['!cols'] = distColWidths;
+      
+      // Border untuk sheet distribusi
+      const distRange = XLSX.utils.decode_range(wsDist['!ref']);
+      for (let R = distRange.s.r; R <= distRange.e.r; R++) {
+        for (let C = distRange.s.c; C <= distRange.e.c; C++) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!wsDist[cellRef]) continue;
+          
+          if (R === 0) {
+            wsDist[cellRef].s = {
+              font: { bold: true },
+              fill: { fgColor: { rgb: "E8F0FE" } },
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          } else if (R === distRange.e.r) {
+            // Baris total - bold
+            wsDist[cellRef].s = {
+              font: { bold: true },
+              fill: { fgColor: { rgb: "F0F0F0" } },
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          } else {
+            wsDist[cellRef].s = {
+              alignment: { horizontal: "center", vertical: "center" },
+              border: {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+              }
+            };
+          }
+        }
+      }
+      
+      XLSX.utils.book_append_sheet(wb, wsDist, "Distribusi Penyelesaian");
+    }
+
+    // ==================== SHEET 5: RINGKASAN ====================
+    const ringkasanHeaders = ["Metrik", "Nilai"];
+    const ringkasanWsData = [
+      ringkasanHeaders,
+      ["Periode", ringkasanData.periode || "-"],
+      ["Total Selesai", ringkasanData.totalSelesai || 0],
+      ["Total Belum Selesai", ringkasanData.totalBelum || 0],
+      ["Rata-rata Harian", ringkasanData.rataRataHarian || 0]
+    ];
+    
+    const wsRingkasan = XLSX.utils.aoa_to_sheet(ringkasanWsData);
+    
+    // Auto width untuk ringkasan
+    wsRingkasan['!cols'] = [{ wch: 25 }, { wch: 20 }];
+    
+    // Border untuk sheet ringkasan
+    const ringkasanRange = XLSX.utils.decode_range(wsRingkasan['!ref']);
+    for (let R = ringkasanRange.s.r; R <= ringkasanRange.e.r; R++) {
+      for (let C = ringkasanRange.s.c; C <= ringkasanRange.e.c; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!wsRingkasan[cellRef]) continue;
+        
+        if (R === 0) {
+          wsRingkasan[cellRef].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "E8F0FE" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } }
+            }
+          };
+        } else {
+          wsRingkasan[cellRef].s = {
+            alignment: { horizontal: "left", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } }
+            }
+          };
+        }
+      }
+    }
+    
+    XLSX.utils.book_append_sheet(wb, wsRingkasan, "Ringkasan");
+    
+    // Generate dan download file XLSX
+    XLSX.writeFile(wb, `${fileName}_${dateStr}.xlsx`);
     
   } else {
     // Export ke format CSV
@@ -184,13 +412,20 @@ export default function Laporan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Filter states - set default to today for mulai, empty for selesai
+  // Filter states
   const [filterTanggalMulai, setFilterTanggalMulai] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    // load dari localStorage, jika tidak ada gunakan kosong
+    const saved = localStorage.getItem('laporan_filterTanggalMulai');
+    return saved || "";
   });
-  const [filterTanggalSelesai, setFilterTanggalSelesai] = useState(""); // Kosongkan default agar bisa filter tanggal mulai saja
-  const [filterArea, setFilterArea] = useState(""); // "" = semua area
+  const [filterTanggalSelesai, setFilterTanggalSelesai] = useState(() => {
+    const saved = localStorage.getItem('laporan_filterTanggalSelesai');
+    return saved || "";
+  });
+  const [filterArea, setFilterArea] = useState(() => {
+    const saved = localStorage.getItem('laporan_filterArea');
+    return saved || "";
+  });
   const [filteredData, setFilteredData] = useState([]);
   const [allAreas, setAllAreas] = useState([]);
 
@@ -199,31 +434,24 @@ export default function Laporan() {
     const fetchLaporanData = async () => {
       try {
         setLoading(true);
-        // Jika ada filter tanggal, fetch dengan parameter tanggal
         let response;
         if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
             filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-          // Jika ada range tanggal yang berbeda, fetch semua data dan filter client-side
           response = await penugasanAPI.getLaporan();
         } else if (filterTanggalMulai && filterTanggalMulai.trim() !== "" && 
                    (!filterTanggalSelesai || filterTanggalSelesai.trim() === "")) {
-          // Jika hanya ada tanggal mulai (tanpa tanggal selesai), fetch data untuk tanggal mulai saja
           response = await penugasanAPI.getLaporan(filterTanggalMulai);
         } else if (filterTanggalSelesai && filterTanggalSelesai.trim() !== "" && 
                    (!filterTanggalMulai || filterTanggalMulai.trim() === "")) {
-          // Jika hanya ada tanggal selesai (tanpa tanggal mulai), fetch data untuk tanggal selesai saja
           response = await penugasanAPI.getLaporan(filterTanggalSelesai);
         } else if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai === filterTanggalSelesai && 
                    filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-          // Jika tanggal mulai dan selesai sama, fetch data untuk tanggal tersebut
           response = await penugasanAPI.getLaporan(filterTanggalMulai);
         } else {
-          // Jika tidak ada filter tanggal yang valid, fetch semua data
           response = await penugasanAPI.getLaporan();
         }
         const laporanList = response.data.data || [];
 
-        // Transform data dari laporan ke format untuk ditampilkan
         const transformedData = laporanList.map((item) => {
           const tanggalFormatted = new Date(item.tanggal).toLocaleDateString('id-ID', {
             day: 'numeric',
@@ -245,7 +473,6 @@ export default function Laporan() {
           };
         });
 
-        // Sort by tanggal (newest first)
         transformedData.sort((a, b) => b.tanggalRaw - a.tanggalRaw);
 
         setRiwayatTugas(transformedData);
@@ -263,8 +490,6 @@ export default function Laporan() {
           }
         });
         setTrendData(Object.values(trendMap).slice(0, 7));
-
-        // Calculate performa per area - berdasarkan nilai (hijau=selesai)
         const areaMap = {};
         transformedData.forEach((item) => {
           const areaName = item.area;
@@ -301,8 +526,6 @@ export default function Laporan() {
           rataRataHarian: avgHarian
         });
 
-        // Set default filter: tanggal mulai = today, tanggal selesai = kosong (untuk filter tanggal mulai saja)
-        // Extract unique areas
         const uniqueAreas = [...new Set(transformedData.map(item => item.area).filter(a => a !== "-"))];
         setAllAreas(uniqueAreas);
 
@@ -406,6 +629,19 @@ export default function Laporan() {
     applyFilters();
   }, [filterTanggalMulai, filterTanggalSelesai, filterArea, riwayatTugas]);
 
+  // Simpan filter ke localStorage setiap kali berubah
+  useEffect(() => {
+    localStorage.setItem('laporan_filterTanggalMulai', filterTanggalMulai || "");
+  }, [filterTanggalMulai]);
+
+  useEffect(() => {
+    localStorage.setItem('laporan_filterTanggalSelesai', filterTanggalSelesai || "");
+  }, [filterTanggalSelesai]);
+
+  useEffect(() => {
+    localStorage.setItem('laporan_filterArea', filterArea || "");
+  }, [filterArea]);
+
   // Hitung ulang analytics ketika filtered data berubah (termasuk search)
   useEffect(() => {
     const filtered = riwayatTugas.filter((item) => {
@@ -481,7 +717,7 @@ export default function Laporan() {
             </div>
             <div className="laporan-actions">
               <button className="btn-cetak"><FiPrinter /> Cetak PDF</button>
-              <button className="btn-unduh" onClick={() => exportToExcel(filteredData, 'xlsx', 'laporan_kebersihan')}>
+              <button className="btn-unduh" onClick={() => exportToExcel(filteredData, trendData, performaArea, distribusiData, ringkasanData, 'xlsx', 'laporan_kebersihan')}>
                 <FiDownload /> Unduh Excel
               </button>
             </div>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  FiChevronDown,
-  FiEdit2,
-  FiPlus,
-  FiSearch,
-  FiTrash2
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2
 } from "react-icons/fi";
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
@@ -59,6 +59,18 @@ export default function PenugasanOB() {
       deskripsi: item.deskripsi || ""
     };
   };
+
+  // Cek apakah penugasan masih aktif (tanggal akhir >= hari ini)
+  const isPenugasanAktif = (tanggalSelesai) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(tanggalSelesai);
+    endDate.setHours(0, 0, 0, 0);
+    return endDate >= today;
+  };
+
+  // Filter data - hanya tampilkan penugasan yang belum expired
+  const activePenugasan = dataPenugasan.filter(item => isPenugasanAktif(item.tanggalSelesai));
 
   // Fetch data dari database
   useEffect(() => {
@@ -200,14 +212,14 @@ export default function PenugasanOB() {
                       {error}
                     </td>
                   </tr>
-                ) : dataPenugasan.length === 0 ? (
+                ) : activePenugasan.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
-                      Tidak ada data penugasan
+                      Tidak ada penugasan aktif. Silakan tambah penugasan baru.
                     </td>
                   </tr>
                 ) : (
-                  dataPenugasan.map((item) => (
+                  activePenugasan.map((item) => (
                     <tr key={item.id_penugasan}>
                       <td>{item.periode}</td>
                       <td>{item.area}</td>

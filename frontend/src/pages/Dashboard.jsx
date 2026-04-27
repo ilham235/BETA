@@ -35,6 +35,19 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Cek apakah penugasan masih aktif (tanggal akhir >= hari ini)
+  const isPenugasanAktif = (tanggalAkhir) => {
+    if (!tanggalAkhir) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(tanggalAkhir);
+    endDate.setHours(0, 0, 0, 0);
+    return endDate >= today;
+  };
+
+  // Filter data - hanya tampilkan penugasan yang belum expired
+  const activePenugasan = penugasanList.filter(item => isPenugasanAktif(item.tanggal_akhir));
+
   // Fetch penugasan data
   useEffect(() => {
     const fetchPenugasan = async () => {
@@ -48,20 +61,23 @@ export default function Dashboard() {
           
           console.log("Data from API:", data);
           
+          // Filter hanya penugasan aktif (belum expired)
+          const aktif = data.filter(item => isPenugasanAktif(item.tanggal_akhir));
+          
           // Tugas yang belum selesai / aktif
-          const tugasAktif = data.filter(item => 
+          const tugasAktif = aktif.filter(item => 
             item.status !== 'selesai' && item.status !== 'Selesai'
           ).length;
 
           // Area tercover (jumlah ruangan unik)
-          const areaTercover = new Set(data.filter(item => item.id_ruangan).map(item => item.id_ruangan)).size;
+          const areaTercover = new Set(aktif.filter(item => item.id_ruangan).map(item => item.id_ruangan)).size;
 
           // Tugas selesai
-          const tugasSelesai = data.filter(item => item.status === 'selesai' || item.status === 'Selesai').length;
+          const tugasSelesai = aktif.filter(item => item.status === 'selesai' || item.status === 'Selesai').length;
 
           // Progress percentage
-          const progressPercentage = data.length > 0 
-            ? Math.round((tugasSelesai / data.length) * 100)
+          const progressPercentage = aktif.length > 0 
+            ? Math.round((tugasSelesai / aktif.length) * 100)
             : 0;
 
           console.log("Stats:", { tugasAktif, areaTercover, tugasSelesai, progressPercentage });
@@ -190,7 +206,7 @@ export default function Dashboard() {
               <h2>{stats.tugasHariIni}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Tugas Belum Selesai</p>
-                <p className="footer-sub">Dari {penugasanList.length} Total Tugas</p>
+                <p className="footer-sub">Dari {activePenugasan.length} Total Tugas</p>
               </div>
             </div>
 
@@ -202,7 +218,7 @@ export default function Dashboard() {
               <h2>{stats.areaTercover}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Area dcheck</p>
-                <p className="footer-sub">Total Area: {penugasanList.length > 0 ? penugasanList.length : '0'}</p>
+                <p className="footer-sub">Total Area: {activePenugasan.length > 0 ? activePenugasan.length : '0'}</p>
               </div>
             </div>
 
@@ -214,7 +230,7 @@ export default function Dashboard() {
               <h2>{stats.tugasSelesai}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Tugas diselesaikan</p>
-                <p className="footer-sub">Tersisa {penugasanList.length - stats.tugasSelesai}</p>
+                <p className="footer-sub">Tersisa {activePenugasan.length - stats.tugasSelesai}</p>
               </div>
             </div>
 
@@ -300,14 +316,14 @@ export default function Dashboard() {
                         Error: {error}
                       </td>
                     </tr>
-                  ) : penugasanList.length === 0 ? (
+                  ) : activePenugasan.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                        Tidak ada tugas
+                        Tidak ada tugas aktif
                       </td>
                     </tr>
                   ) : (
-                    penugasanList
+                    activePenugasan
                       .filter(item => {
                         if (!searchQuery) return true;
                         const query = searchQuery.toLowerCase();
