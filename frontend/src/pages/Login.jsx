@@ -23,11 +23,16 @@ export default function Login() {
     }
 
     try {
-      await login(username, password);
+      const result = await login(username, password);
       if (remember) {
         localStorage.setItem("rememberUsername", username);
       }
-      navigate("/dashboard");
+      // Arahkan berdasarkan role user
+      if (result.user && result.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setLocalError(err.response?.data?.message || "Login gagal. Silahkan coba lagi.");
     }

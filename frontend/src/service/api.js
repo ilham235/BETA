@@ -61,4 +61,19 @@ export const penugasanAPI = {
   updateLaporan: (id_laporan, data) => apiClient.put(`/penugasan/laporan/${id_laporan}`, data),
 };
 
+export const adminAPI = {
+  getDashboardStats: () => apiClient.get("/admin/dashboard"),
+  getAllUsers: () => apiClient.get("/admin/users"),
+  createUser: (data) => apiClient.post("/admin/users", data),
+  updateUser: (id, data) => apiClient.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => apiClient.delete(`/admin/users/${id}`),
+};
+
+export const areaAPI = {
+  getAll: () => apiClient.get("/area"),
+  create: (data) => apiClient.post("/area", data),
+  update: (id, data) => apiClient.put(`/area/${id}`, data),
+  delete: (id) => apiClient.delete(`/area/${id}`),
+};
+
 export default apiClient;

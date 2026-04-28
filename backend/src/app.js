@@ -1,5 +1,7 @@
 import cors from "cors";
 import express from "express";
+import adminRoutes from "./routes/adminRoutes.js";
+import areaRoutes from "./routes/areaRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import penugasanRoutes from "./routes/penugasanRoutes.js";
 
@@ -26,6 +28,10 @@ app.use("/api/auth", authRoutes);
 console.log("Auth routes mounted");
 app.use("/api/penugasan", penugasanRoutes);
 console.log("Penugasan routes mounted");
+app.use("/api/admin", adminRoutes);
+console.log("Admin routes mounted");
+app.use("/api/area", areaRoutes);
+console.log("Area routes mounted");
 
 // Debug middleware
 app.use((req, res) => {

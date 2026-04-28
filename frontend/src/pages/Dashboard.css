@@ -572,3 +572,52 @@ td { padding: 15px; font-size: 14px; border-bottom: 1px solid #f7fafc; }
 .dashboard-container {
   position: relative;
 }
+/* =========================================
+   SIDEBAR HOVER ANIMATION 
+========================================= */
+
+.sidebar-menu li,
+.admin-sidebar-menu li,
+.sidebar-item,
+.menu-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* saat hover */
+.sidebar-menu li:hover,
+.admin-sidebar-menu li:hover,
+.sidebar-item:hover,
+.menu-item:hover {
+  transform: translateY(0);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+}
+
+/* item aktif */
+.sidebar-menu .active,
+.admin-sidebar-menu .active,
+.sidebar-item.active,
+.menu-item.active {
+  background: #00852d;
+  color: white;
+  box-shadow: 0 10px 22px rgba(0, 133, 45, 0.25);
+}
+
+/* icon di dalam menu ikut animasi */
+.sidebar-menu li svg,
+.admin-sidebar-menu li svg,
+.sidebar-item svg,
+.menu-item svg {
+  transition: all 0.1s ease;
+}
+
+.sidebar-menu li:hover svg,
+.admin-sidebar-menu li:hover svg,
+.sidebar-item:hover svg,
+.menu-item:hover svg {
+  transform: scale(1.08);
+}
