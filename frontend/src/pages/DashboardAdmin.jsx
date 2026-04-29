@@ -2,15 +2,29 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { useAuth } from "../context/AuthContext";
-import { adminAPI } from "../service/api";
 import "./DashboardAdmin.css";
 
 import {
-  FiArrowUpRight,
-  FiChevronDown,
-  FiSearch,
-  FiCheckCircle,
+    FiArrowUpRight,
+    FiCheckCircle,
+    FiChevronDown,
+    FiSearch,
 } from "react-icons/fi";
+
+// Data mock untuk DashboardAdmin (tanpa backend)
+const MOCK_STATS = {
+  totalArea: 5,
+  totalUser: 12,
+  totalTugas: 28,
+};
+
+const MOCK_ACTIVITIES = [
+  { id: 1, aktivitas: "Penugasan baru untuk Area A", status: "Selesai", waktu: "2 jam lalu" },
+  { id: 2, aktivitas: "Update laporan harian", status: "Sedang berlangsung", waktu: "4 jam lalu" },
+  { id: 3, aktivitas: "Verifikasi kehadiran OB", status: "Menunggu", waktu: "5 jam lalu" },
+  { id: 4, aktivitas: "Penugasan baru untuk Area B", status: "Selesai", waktu: "1 hari lalu" },
+  { id: 5, aktivitas: "Review kinerja supervisor", status: "Menunggu", waktu: "2 hari lalu" },
+];
 
 export default function DashboardAdmin() {
   const [activities, setActivities] = useState([]);
@@ -26,31 +40,10 @@ export default function DashboardAdmin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchAdminDashboard = async () => {
-      try {
-        setLoading(true);
-
-        const response = await adminAPI.getDashboardStats();
-
-        if (response.data.success) {
-          const { data } = response.data;
-
-          setStats({
-            totalArea: data.total_area || 0,
-            totalUser: data.total_user || 0,
-            totalTugas: data.total_tugas || 0,
-          });
-
-          setActivities(data.recent_activities || []);
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdminDashboard();
+    // Langsung gunakan data mock tanpa API
+    setStats(MOCK_STATS);
+    setActivities(MOCK_ACTIVITIES);
+    setLoading(false);
   }, []);
 
   const getStatusClass = (status) => {

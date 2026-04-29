@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import KelolaArea from "./pages/KelolaArea";
+import KelolaUser from "./pages/KelolaUser";
 import Laporan from "./pages/Laporan";
 import Login from "./pages/Login";
 import Pengawasan from "./pages/Pengawasan";
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><DashboardAdmin /></AdminRoute>} />
       <Route path="/admin/area" element={<AdminRoute><KelolaArea /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><KelolaUser /></AdminRoute>} />
       <Route path="/penugasan" element={<ProtectedRoute><PenugasanOB /></ProtectedRoute>} />
       <Route path="/pengawasan" element={<ProtectedRoute><Pengawasan /></ProtectedRoute>} />
       <Route path="/laporan" element={<ProtectedRoute><Laporan/></ProtectedRoute>} />

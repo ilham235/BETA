@@ -76,4 +76,12 @@ export const areaAPI = {
   delete: (id) => apiClient.delete(`/area/${id}`),
 };
 
+// userAPI placeholder untuk KelolaUser (tanpa backend)
+export const userAPI = {
+  getAll: () => Promise.resolve({ data: { success: true, data: [] } }),
+  create: (data) => Promise.resolve({ data: { success: true } }),
+  update: (id, data) => Promise.resolve({ data: { success: true } }),
+  delete: (id) => Promise.resolve({ data: { success: true } }),
+};
+
 export default apiClient;
