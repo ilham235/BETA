@@ -76,6 +76,13 @@ export const areaAPI = {
   delete: (id) => apiClient.delete(`/area/${id}`),
 };
 
+export const shiftAPI = {
+  getAll: () => apiClient.get("/shift"),
+  create: (data) => apiClient.post("/shift", data),
+  update: (id, data) => apiClient.put(`/shift/${id}`, data),
+  delete: (id) => apiClient.delete(`/shift/${id}`),
+};
+
 // userAPI placeholder untuk KelolaUser (tanpa backend)
 export const userAPI = {
   getAll: () => Promise.resolve({ data: { success: true, data: [] } }),

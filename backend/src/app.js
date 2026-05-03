@@ -4,6 +4,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import areaRoutes from "./routes/areaRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import penugasanRoutes from "./routes/penugasanRoutes.js";
+import shiftRoutes from "./routes/shiftRoutes.js";
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.use("/api/admin", adminRoutes);
 console.log("Admin routes mounted");
 app.use("/api/area", areaRoutes);
 console.log("Area routes mounted");
+app.use("/api/shift", shiftRoutes);
+console.log("Shift routes mounted");
 
 // Debug middleware
 app.use((req, res) => {
