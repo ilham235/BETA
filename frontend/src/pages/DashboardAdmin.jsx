@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { useAuth } from "../context/AuthContext";
+import { adminAPI, penugasanAPI } from "../service/api";
 import "./DashboardAdmin.css";
 
 import {
@@ -11,19 +12,15 @@ import {
     FiSearch,
 } from "react-icons/fi";
 
-// Data mock untuk DashboardAdmin (tanpa backend)
-const MOCK_STATS = {
-  totalArea: 5,
-  totalUser: 12,
-  totalTugas: 28,
+// Data mock untuk fallback jika API gagal
+const FALLBACK_STATS = {
+  totalArea: 0,
+  totalUser: 0,
+  totalTugas: 0,
 };
 
-const MOCK_ACTIVITIES = [
-  { id: 1, aktivitas: "Penugasan baru untuk Area A", status: "Selesai", waktu: "2 jam lalu" },
-  { id: 2, aktivitas: "Update laporan harian", status: "Sedang berlangsung", waktu: "4 jam lalu" },
-  { id: 3, aktivitas: "Verifikasi kehadiran OB", status: "Menunggu", waktu: "5 jam lalu" },
-  { id: 4, aktivitas: "Penugasan baru untuk Area B", status: "Selesai", waktu: "1 hari lalu" },
-  { id: 5, aktivitas: "Review kinerja supervisor", status: "Menunggu", waktu: "2 hari lalu" },
+const FALLBACK_ACTIVITIES = [
+  { id: 1, nama: "Admin", aksi: "Sistem dimulai", area: "-", waktu: "Baru saja", status: "selesai" },
 ];
 
 export default function DashboardAdmin() {
@@ -40,11 +37,63 @@ export default function DashboardAdmin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Langsung gunakan data mock tanpa API
-    setStats(MOCK_STATS);
-    setActivities(MOCK_ACTIVITIES);
-    setLoading(false);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch stats dari backend
+        const statsResponse = await adminAPI.getDashboardStats();
+        if (statsResponse.data.success) {
+          setStats(statsResponse.data.data);
+        }
+
+        // Fetch aktivitas terbaru dari backend
+        const aktivitasResponse = await penugasanAPI.getAktivitas(10);
+        console.log("Aktivitas Response:", aktivitasResponse.data);
+        if (aktivitasResponse.data.success) {
+          // Transform data untuk UI
+          const transformedActivities = aktivitasResponse.data.data.map(item => ({
+            id: item.id_aktivitas,
+            nama: item.nama_user || 'User',
+            aksi: item.aksi,
+            area: item.area_terkait || item.nama_entitas || '-',
+            waktu: formatTimeAgo(item.created_at),
+            status: item.status,
+            tipe_aktivitas: item.tipe_aktivitas,
+            detail: item.detail
+          }));
+          console.log("Transformed Activities:", transformedActivities);
+          setActivities(transformedActivities);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        // Fallback ke data default jika error
+        setStats(FALLBACK_STATS);
+        setActivities(FALLBACK_ACTIVITIES);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
+
+  // Helper function untuk format waktu
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInHours < 1) {
+      return "Baru saja";
+    } else if (diffInHours < 24) {
+      return `${diffInHours} jam lalu`;
+    } else {
+      return `${diffInDays} hari lalu`;
+    }
+  };
 
   const getStatusClass = (status) => {
     const s = status?.toLowerCase();

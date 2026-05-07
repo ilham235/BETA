@@ -1,21 +1,86 @@
-.laporan-header {
+.laporan-page {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f9fb;
+}
+
+.laporan-main {
+  flex: 1;
+  padding: 24px 32px;
+}
+
+/* TOPBAR */
+.topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
 }
 
-.header-text h1 {
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0;
-  color: #1a1a1a;
+.search-box {
+  width: 360px;
+  height: 46px;
+  background: white;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  border: 1px solid #eee;
 }
 
-.header-text p {
-  color: #00712d;
-  font-size: 14px;
-  margin-top: 5px;
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+/* USER */
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid #eee;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #00a63e;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 36px;
+}
+
+.header p {
+  color: #777;
+  margin-top: 6px;
+}
+
+/* CONTENT */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .laporan-actions {

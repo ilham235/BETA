@@ -2,7 +2,7 @@ import pool from "../config/db.js";
 
 export const findAllArea = async () => {
   try {
-    const result = await pool.query("SELECT * FROM area ORDER BY nama");
+    const result = await pool.query("SELECT id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status FROM ruangan ORDER BY nama_ruangan");
     return result.rows;
   } catch (error) {
     console.error("Error finding all area:", error);
@@ -12,7 +12,7 @@ export const findAllArea = async () => {
 
 export const findAreaById = async (id) => {
   try {
-    const result = await pool.query("SELECT * FROM area WHERE id_area = $1", [id]);
+    const result = await pool.query("SELECT id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status FROM ruangan WHERE id_ruangan = $1", [id]);
     return result.rows[0];
   } catch (error) {
     console.error("Error finding area by id:", error);
@@ -23,8 +23,8 @@ export const findAreaById = async (id) => {
 export const createArea = async (data) => {
   try {
     const result = await pool.query(
-      "INSERT INTO area (nama, deskripsi, status) VALUES ($1, $2, $3) RETURNING *",
-      [data.nama, data.deskripsi, data.status || "aktif"]
+      "INSERT INTO ruangan (nama_ruangan, lantai, status) VALUES ($1, $2, $3) RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
+      [data.nama, data.deskripsi || 'Lantai 1', data.status || "aktif"]
     );
     return result.rows[0];
   } catch (error) {
@@ -36,8 +36,8 @@ export const createArea = async (data) => {
 export const updateArea = async (id, data) => {
   try {
     const result = await pool.query(
-      "UPDATE area SET nama = $1, deskripsi = $2, status = $3 WHERE id_area = $4 RETURNING *",
-      [data.nama, data.deskripsi, data.status, id]
+      "UPDATE ruangan SET nama_ruangan = $1, lantai = $2, status = $3 WHERE id_ruangan = $4 RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
+      [data.nama, data.deskripsi || 'Lantai 1', data.status, id]
     );
     return result.rows[0];
   } catch (error) {

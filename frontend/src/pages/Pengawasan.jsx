@@ -215,26 +215,33 @@ export default function Pengawasan() {
                       <td>{item.shift}</td>
                       <td>{laporanMap[item.id_penugasan]?.person_assigned || item.petugas}</td>
                       <td>
-                        {item.status === "Selesai" ? (
+                        {laporanMap[item.id_penugasan] ? (
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <span className="color-box-p" style={{
                               backgroundColor: 
                                 laporanMap[item.id_penugasan]?.nilai === "green" ? "#28a745" :
-                                laporanMap[item.id_penugasan]?.nilai === "yellow" ? "#ffeb3b" :
+                                laporanMap[item.id_penugasan]?.nilai === "yellow" ? "#ffc107" :
                                 laporanMap[item.id_penugasan]?.nilai === "red" ? "#dc3545" : "#ccc"
                             }}></span>
                             <span style={{ fontSize: "13px", fontWeight: "500", color: "#4a4a4a" }}>
-                              {laporanMap[item.id_penugasan]?.nilai === "green" ? "Baik" :
-                               laporanMap[item.id_penugasan]?.nilai === "yellow" ? "Cukup" :
-                               laporanMap[item.id_penugasan]?.nilai === "red" ? "Kurang" : "-"}
+                              {laporanMap[item.id_penugasan]?.nilai === "green" ? "Selesai" :
+                               laporanMap[item.id_penugasan]?.nilai === "yellow" ? "Selesai" :
+                               laporanMap[item.id_penugasan]?.nilai === "red" ? "Belum Selesai" : "-"}
                             </span>
                           </div>
                         ) : (
-                          <span>&nbsp;</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span className="color-box-p" style={{
+                              backgroundColor: "#d3d3d3"
+                            }}></span>
+                            <span style={{ fontSize: "13px", fontWeight: "500", color: "#999999" }}>
+                              Belum Dinilai
+                            </span>
+                          </div>
                         )}
                       </td>
                       <td>
-                        {item.status === "Selesai" ? (
+                        {laporanMap[item.id_penugasan] ? (
                           <button className="btn-detail" onClick={() => setModalDetail(item)}>
                             <FiInfo /> Detail
                           </button>
@@ -259,20 +266,29 @@ export default function Pengawasan() {
           data={modalNilai} 
           onClose={() => {
             setModalNilai(null);
-            // Refresh data setelah simpan
-            penugasanAPI.getLaporan().then(res => {
+            // Refresh data setelah simpan hanya untuk tanggal hari ini
+            const todayString = new Date().toLocaleDateString('en-CA');
+            penugasanAPI.getLaporan(todayString).then(res => {
               const laporan = {};
               (res.data.data || []).forEach(report => {
-                laporan[report.id_penugasan] = report;
+                if (!laporan[report.id_penugasan]) {
+                  laporan[report.id_penugasan] = report;
+                }
               });
               setLaporanMap(laporan);
               // Refresh penugasan juga untuk update status
-              penugasanAPI.getAllPenugasan().then(res => {
-                const filtered = (res.data.data || []).filter(item => {
-                  const tanggal = new Date(item.tanggal_awal);
-                  return tanggal >= new Date() && tanggal.getHours() <= 18;
+              penugasanAPI.getAll().then(res => {
+                const updatedData = (res.data.data || []).map(transformItem);
+                const filtered = updatedData.filter((item) => {
+                  const start = new Date(item.tanggalAwal);
+                  const end = new Date(item.tanggalAkhir);
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  start.setHours(0, 0, 0, 0);
+                  end.setHours(0, 0, 0, 0);
+                  return item.statusInput === "Lengkap" && now >= start && now <= end;
                 });
-                setDataTugas(filtered.map(transformItem));
+                setDataTugas(filtered);
               }).catch(err => console.error("Error refetching penugasan:", err));
             }).catch(err => console.error("Error refetching laporan:", err));
           }}

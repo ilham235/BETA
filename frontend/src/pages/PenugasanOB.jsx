@@ -13,6 +13,8 @@ import Hapus from "./Delete";
 import "./PenugasanOB.css";
 import TambahTugas from "./TambahTugas";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function PenugasanOB() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false); 
@@ -77,16 +79,37 @@ export default function PenugasanOB() {
     const fetchPenugasan = async () => {
       try {
         setLoading(true);
+        console.log("🔄 Fetching penugasan dari:", `${API_BASE_URL}/penugasan`);
         const response = await penugasanAPI.getAll();
+        
+        console.log("✅ Response diterima:", response.data);
         
         // Transform data dari database ke format yang sesuai dengan UI
         const transformedData = (response.data.data || []).map(transformItem);
 
+        console.log("📊 Data setelah transform:", transformedData);
         setDataPenugasan(transformedData);
         setError(null);
       } catch (err) {
-        console.error("Error fetching penugasan:", err);
-        setError("Gagal memuat data penugasan");
+        console.error("❌ Error fetching penugasan:", err);
+        
+        // Detailed error handling
+        let errorMessage = "Gagal memuat data penugasan";
+        if (err.response) {
+          // Server responded with error status
+          const status = err.response.status;
+          const data = err.response.data;
+          errorMessage = `Error ${status}: ${data?.message || data?.error || "Server error"}`;
+        } else if (err.request) {
+          // Request made but no response
+          errorMessage = "Tidak ada respons dari server. Pastikan backend berjalan di http://localhost:5000";
+        } else {
+          // Error in request setup
+          errorMessage = `Error: ${err.message}`;
+        }
+        
+        console.error("📋 Error detail:", errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -133,7 +156,11 @@ export default function PenugasanOB() {
         setDataPenugasan(transformedData);
       }
     } catch (err) {
-      console.error("Error refreshing penugasan:", err);
+      console.error("❌ Error refreshing penugasan:", err);
+      const errorMsg = err.response?.status === 401 
+        ? "Sesi Anda telah berakhir. Silakan login kembali."
+        : err.response?.data?.message || "Gagal memperbarui data";
+      alert(errorMsg);
     }
   };
 

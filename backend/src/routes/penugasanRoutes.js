@@ -1,16 +1,20 @@
 import express from "express";
 import {
+    createNewAktivitas,
     createNewLaporan,
     createNewOB,
     createNewPenugasan,
     createNewRuangan,
+    createNewTugas,
     deleteExistingPenugasan,
+    getAktivitas,
     getLaporan,
     getLaporanByPenugasan,
     getOB,
     getPenugasan,
     getPenugasanById,
     getRuangan,
+    getTugas,
     updateExistingPenugasan,
     updateLaporanController
 } from "../controller/penugasanController.js";
@@ -41,6 +45,14 @@ router.post("/ob", createNewOB);
 // RUANGAN ROUTES
 router.get("/ruangan/all", getRuangan);
 router.post("/ruangan", createNewRuangan);
+
+// TUGAS ROUTES
+router.get("/tugas/all", getTugas);
+router.post("/tugas", createNewTugas);
+
+// AKTIVITAS ADMIN ROUTES
+router.get("/aktivitas/all", getAktivitas);
+router.post("/aktivitas", createNewAktivitas);
 
 // PENUGASAN ROUTES - GENERIC ROUTES COME LAST
 router.get("/", getPenugasan);

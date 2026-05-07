@@ -150,6 +150,27 @@ const Penilaian = ({ data, onClose }) => {
       if (response.data.success) {
         setSuccess(true);
         console.log("✅ Laporan berhasil disimpan:", response.data.data);
+
+        try {
+          const aktivitasPayload = {
+            id_user: user.id,
+            nama_user: user.nama_lengkap,
+            role_user: user.role,
+            tipe_aktivitas: "penilaian",
+            aksi: existingLaporan && existingLaporan.id_laporan ? "Update penilaian" : "Buat penilaian",
+            nama_entitas: "Pengawasan",
+            id_entitas: response.data.data.id_laporan || laporanData.id_penugasan,
+            detail: `Penilaian ${selectedNilai ? selectedNilai : "tanpa nilai"} untuk penugasan ${laporanData.id_penugasan}`,
+            area_terkait: data.area || data.nama_ruangan || "-",
+            status: response.data.data.status || "selesai"
+          };
+
+          console.log("📤 Mengirim aktivitas penilaian:", aktivitasPayload);
+          await penugasanAPI.createAktivitas(aktivitasPayload);
+          console.log("✅ Aktivitas penilaian berhasil dicatat");
+        } catch (activityError) {
+          console.warn("⚠️ Gagal mencatat aktivitas penilaian:", activityError);
+        }
         
         // Tutup modal setelah 1.5 detik
         setTimeout(() => {

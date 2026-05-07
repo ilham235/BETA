@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import { useAuth } from "../context/AuthContext";
+import { adminAPI } from "../service/api";
 import "./KelolaUser.css";
 
 import {
-    FiChevronDown,
-    FiEdit2,
-    FiPlus,
-    FiSearch,
-    FiTrash2,
-    FiX,
+  FiChevronDown,
+  FiEdit2,
+  FiPlus,
+  FiSearch,
+  FiTrash2,
+  FiX,
 } from "react-icons/fi";
-
-// Data mock untuk KelolaUser (tanpa backend)
-const MOCK_USERS = [
-  { id_user: 1, nama_lengkap: "Admin Sistem", email: "admin@test.com", role: "Admin", status: "Aktif" },
-  { id_user: 2, nama_lengkap: "Supervisor Satu", email: "supervisor1@test.com", role: "Supervisor", status: "Aktif" },
-  { id_user: 3, nama_lengkap: "Supervisor Dua", email: "supervisor2@test.com", role: "Supervisor", status: "Aktif" },
-  { id_user: 4, nama_lengkap: "Supervisor Tiga", email: "supervisor3@test.com", role: "Supervisor", status: "Nonaktif" },
-];
 
 export default function KelolaUser() {
   const { user } = useAuth();
@@ -26,6 +19,7 @@ export default function KelolaUser() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -34,19 +28,38 @@ export default function KelolaUser() {
   const [formData, setFormData] = useState({
     nama_lengkap: "",
     email: "",
-    role: "supervisor",
+    password: "",
+    role: "user",
     status: "aktif",
   });
 
   useEffect(() => {
-
-    setUsers(MOCK_USERS);
-    setLoading(false);
+    fetchUsers();
   }, []);
 
-  const handleDelete = (id) => {
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await adminAPI.getAllUsers();
+      setUsers(response.data.data || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal memuat daftar user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
     if (!window.confirm("Yakin hapus user?")) return;
-    setUsers(users.filter(u => u.id_user !== id));
+
+    try {
+      await adminAPI.deleteUser(id);
+      setUsers((prev) => prev.filter((u) => u.id_user !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || "Gagal menghapus user");
+    }
   };
 
   const handleOpenModal = (user = null) => {
@@ -55,6 +68,7 @@ export default function KelolaUser() {
       setFormData({
         nama_lengkap: user.nama_lengkap,
         email: user.email,
+        password: "",
         role: user.role,
         status: user.status,
       });
@@ -63,7 +77,8 @@ export default function KelolaUser() {
       setFormData({
         nama_lengkap: "",
         email: "",
-        role: "supervisor",
+        password: "",
+        role: "user",
         status: "aktif",
       });
     }
@@ -72,9 +87,17 @@ export default function KelolaUser() {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setEditingUser(null);
+    setFormData({
+      nama_lengkap: "",
+      email: "",
+      password: "",
+      role: "supervisor",
+      status: "aktif",
+    });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.nama_lengkap || !formData.email) {
@@ -82,28 +105,74 @@ export default function KelolaUser() {
       return;
     }
 
+    if (!editingUser && !formData.password) {
+      alert("Password wajib diisi saat tambah user baru");
+      return;
+    }
+
     setSaving(true);
 
-    if (editingUser) {
-      // Edit user
-      setUsers(users.map(u => 
-        u.id_user === editingUser.id_user ? { ...u, ...formData } : u
-      ));
-    } else {
-      // Tambah user baru
-      const newUser = {
-        ...formData,
-        id_user: Date.now(),
-      };
-      setUsers([...users, newUser]);
+    try {
+      if (editingUser) {
+        const payload = {
+          nama_lengkap: formData.nama_lengkap,
+          email: formData.email,
+          role: formData.role,
+          status: formData.status,
+        };
+
+        if (formData.password) {
+          payload.password = formData.password;
+        }
+
+        const response = await adminAPI.updateUser(editingUser.id_user, payload);
+        const updatedUser = response.data.data;
+
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id_user === editingUser.id_user
+              ? {
+                  ...u,
+                  nama_lengkap: updatedUser.nama_lengkap,
+                  email: updatedUser.username || updatedUser.email,
+                  role: updatedUser.role,
+                  status: updatedUser.status,
+                }
+              : u
+          )
+        );
+      } else {
+        const response = await adminAPI.createUser({
+          nama_lengkap: formData.nama_lengkap,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          status: formData.status,
+        });
+        const createdUser = response.data.data;
+        setUsers((prev) => [
+          ...prev,
+          {
+            id_user: createdUser.id_user,
+            nama_lengkap: createdUser.nama_lengkap,
+            email: createdUser.username || createdUser.email,
+            role: createdUser.role,
+            status: createdUser.status,
+          },
+        ]);
+      }
+
+      handleCloseModal();
+    } catch (err) {
+      alert(err.response?.data?.message || "Gagal menyimpan user");
+    } finally {
+      setSaving(false);
     }
-    
-    handleCloseModal();
-    setSaving(false);
   };
 
   const filteredUser = users.filter((u) =>
-    u.nama_lengkap.toLowerCase().includes(search.toLowerCase())
+    u.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -148,6 +217,12 @@ export default function KelolaUser() {
             </button>
           </div>
 
+          {error && (
+            <div className="error-message" style={{ color: "red", marginBottom: "16px" }}>
+              {error}
+            </div>
+          )}
+
           {/* TABLE */}
           <div className="table-box">
             <table>
@@ -181,13 +256,13 @@ export default function KelolaUser() {
                       <td>{item.email}</td>
 
                       <td>
-                        <span className={`role ${item.role}`}>
+                        <span className={`role ${item.role?.charAt(0).toUpperCase() + item.role?.slice(1)}`}>
                           {item.role}
                         </span>
                       </td>
 
                       <td>
-                        <span className={`status ${item.status}`}>
+                        <span className={`status ${item.status?.charAt(0).toUpperCase() + item.status?.slice(1)}`}>
                           {item.status}
                         </span>
                       </td>
@@ -243,6 +318,15 @@ export default function KelolaUser() {
                 }
               />
 
+              <input
+                type="password"
+                placeholder={editingUser ? "Password baru (opsional)" : "Password"}
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+              />
+
               <select
                 value={formData.role}
                 onChange={(e) =>
@@ -250,7 +334,7 @@ export default function KelolaUser() {
                 }
               >
                 <option value="admin">Admin</option>
-                <option value="supervisor">Supervisor</option>
+                <option value="user">User</option>
               </select>
 
               <select

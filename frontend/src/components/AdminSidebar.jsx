@@ -1,10 +1,11 @@
 import {
-  FiGrid,
-  FiMapPin,
-  FiClock,
-  FiUsers,
-  FiClipboard,
-  FiLogOut,
+    FiClipboard,
+    FiClock,
+    FiFileText,
+    FiGrid,
+    FiLogOut,
+    FiMapPin,
+    FiUsers,
 } from "react-icons/fi";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -46,6 +47,11 @@ export default function AdminSidebar() {
       name: "Kelola Tugas",
       path: "/admin/tugas",
       icon: <FiClipboard />,
+    },
+    {
+      name: "Laporan",
+      path: "/admin/laporan",
+      icon: <FiFileText />,
     },
   ];
 

@@ -7,16 +7,16 @@ import iconSiang from "../assets/siang.png";
 import iconSore from "../assets/sore.png";
 import Sidebar from "../components/Sidebar"; // Import Sidebar baru
 import { useAuth } from "../context/AuthContext";
-import { penugasanAPI } from "../service/api";
+import { penugasanAPI, shiftAPI } from "../service/api";
 import "./Dashboard.css";
 import TambahTugas from "./TambahTugas";
 
 import {
-    FiArrowUpRight, FiChevronDown,
-    FiChevronRight,
-    FiLayout,
-    FiPlus,
-    FiSearch
+  FiArrowUpRight, FiChevronDown,
+  FiChevronRight,
+  FiLayout,
+  FiPlus,
+  FiSearch
 } from "react-icons/fi";
 
 export default function Dashboard() {
@@ -31,6 +31,13 @@ export default function Dashboard() {
     progressPercentage: 0
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [shiftList, setShiftList] = useState([]);
+  const [shiftStatus, setShiftStatus] = useState([]);
+  const [footerSubs, setFooterSubs] = useState({
+    tugasHariIni: 'Total penugasan yang aktif',
+    areaTercover: 'Total Area: 0',
+    tugasSelesai: 'Dari pengawasan hari ini'
+  });
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +55,7 @@ export default function Dashboard() {
   // Filter data - hanya tampilkan penugasan yang belum expired
   const activePenugasan = penugasanList.filter(item => isPenugasanAktif(item.tanggal_akhir));
 
-  // Fetch penugasan data
+  // Fetch penugasan data dan laporan untuk menghitung stats
   useEffect(() => {
     const fetchPenugasan = async () => {
       try {
@@ -59,38 +66,107 @@ export default function Dashboard() {
           const data = response.data.data || [];
           setPenugasanList(data);
           
-          console.log("Data from API:", data);
+          console.log("Data penugasan from API:", data);
           
           // Filter hanya penugasan aktif (belum expired)
           const aktif = data.filter(item => isPenugasanAktif(item.tanggal_akhir));
           
-          // Tugas yang belum selesai / aktif
-          const tugasAktif = aktif.filter(item => 
-            item.status !== 'selesai' && item.status !== 'Selesai'
+          // Filter penugasan yang aktif HARI INI (tanggal_awal <= today <= tanggal_akhir)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          const tugasAktifHariIni = aktif.filter(item => {
+            const start = new Date(item.tanggal_awal);
+            const end = new Date(item.tanggal_akhir);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            
+            // Cek apakah hari ini dalam periode penugasan
+            const isInPeriod = today >= start && today <= end;
+            
+            // Cek apakah data lengkap (ada detail_pekerjaan, shift, dan nama_ob)
+            const isComplete = [item.detail_pekerjaan, item.shift, item.nama_ob].every(
+              (field) => field && String(field).trim() !== ""
+            );
+            
+            return isInPeriod && isComplete;
+          });
+          
+          console.log("Tugas aktif hari ini:", tugasAktifHariIni.length);
+          
+          // Calculate yesterday's active tasks for comparison
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          yesterday.setHours(0, 0, 0, 0);
+          
+          const tugasAktifKemarin = aktif.filter(item => {
+            const start = new Date(item.tanggal_awal);
+            const end = new Date(item.tanggal_akhir);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            
+            const isInPeriod = yesterday >= start && yesterday <= end;
+            
+            const isComplete = [item.detail_pekerjaan, item.shift, item.nama_ob].every(
+              (field) => field && String(field).trim() !== ""
+            );
+            
+            return isInPeriod && isComplete;
+          });
+          
+          // Total areas from all active penugasan
+          const totalAreas = new Set(
+            aktif.filter(item => item.id_ruangan).map(item => item.id_ruangan)
+          ).size;
+          const todayString = new Date().toLocaleDateString('en-CA');
+          const laporanResponse = await penugasanAPI.getLaporan(todayString);
+          const laporanHariIni = laporanResponse.data.data || [];
+          
+          console.log("Laporan hari ini:", laporanHariIni);
+          
+          // Tugas yang sudah dinilai hari ini (ada laporan dengan nilai)
+          const tugasSelesaiHariIni = laporanHariIni.filter(
+            laporan => laporan.nilai && (laporan.nilai === 'green' || laporan.nilai === 'yellow')
           ).length;
 
-          // Area tercover (jumlah ruangan unik)
-          const areaTercover = new Set(aktif.filter(item => item.id_ruangan).map(item => item.id_ruangan)).size;
+          // Area tercover (jumlah ruangan unik dari penugasan aktif hari ini)
+          const areaTercover = new Set(
+            tugasAktifHariIni.filter(item => item.id_ruangan).map(item => item.id_ruangan)
+          ).size;
 
-          // Tugas selesai
-          const tugasSelesai = aktif.filter(item => item.status === 'selesai' || item.status === 'Selesai').length;
-
-          // Progress percentage
-          const progressPercentage = aktif.length > 0 
-            ? Math.round((tugasSelesai / aktif.length) * 100)
+          // Progress percentage - berdasarkan laporan yang sudah ada vs tugas aktif hari ini
+          const progressPercentage = tugasAktifHariIni.length > 0 
+            ? Math.round((laporanHariIni.length / tugasAktifHariIni.length) * 100)
             : 0;
 
-          console.log("Stats:", { tugasAktif, areaTercover, tugasSelesai, progressPercentage });
+          console.log("Stats updated:", { 
+            tugasAktifHariIni: tugasAktifHariIni.length, 
+            areaTercover, 
+            tugasSelesaiHariIni,
+            totalLaporan: laporanHariIni.length,
+            progressPercentage 
+          });
 
           setStats({
-            tugasHariIni: tugasAktif,
+            tugasHariIni: tugasAktifHariIni.length,
             areaTercover,
-            tugasSelesai,
+            tugasSelesai: tugasSelesaiHariIni,
             progressPercentage
+          });
+          
+          // Calculate footer sub texts
+          const diffTugas = tugasAktifHariIni.length - tugasAktifKemarin.length;
+          const sisaArea = totalAreas - areaTercover;
+          const sisaTugas = tugasAktifHariIni.length - tugasSelesaiHariIni;
+          
+          setFooterSubs({
+            tugasHariIni: `${diffTugas >= 0 ? '+' : ''}${diffTugas} dari kemarin`,
+            areaTercover: `Sisa ${sisaArea} dari ${totalAreas} area`,
+            tugasSelesai: `Sisa ${sisaTugas} dari ${tugasAktifHariIni.length} tugas`
           });
         }
       } catch (err) {
-        console.error("Error fetching penugasan:", err);
+        console.error("Error fetching penugasan/laporan:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -98,7 +174,25 @@ export default function Dashboard() {
     };
 
     fetchPenugasan();
+    fetchShifts();
   }, []);
+
+  const fetchShifts = async () => {
+    try {
+      const response = await shiftAPI.getAll();
+      if (response.data.success) {
+        const data = response.data.data || [];
+        const sortedShifts = [...data].sort((a, b) => {
+          const [aHour, aMinute] = (a.jam_mulai || "00:00").slice(0, 5).split(":").map(Number);
+          const [bHour, bMinute] = (b.jam_mulai || "00:00").slice(0, 5).split(":").map(Number);
+          return aHour * 60 + aMinute - (bHour * 60 + bMinute);
+        });
+        setShiftList(sortedShifts);
+      }
+    } catch (err) {
+      console.error("Error fetching shifts:", err);
+    }
+  };
 
   // Format tanggal
   const formatDate = (dateString) => {
@@ -112,63 +206,79 @@ export default function Dashboard() {
     return status.toLowerCase() === 'selesai' ? 'selesai' : 'belum';
   };
 
-  // Shift configuration
-  const shifts = [
-    { name: 'Pagi', start: '07:00', end: '10:30', icon: iconPagi },
-    { name: 'Siang', start: '10:30', end: '14:00', icon: iconSiang },
-    { name: 'Sore', start: '14:00', end: '17:00', icon: iconSore }
+  const fallbackShifts = [
+    { nama_shift: 'Pagi', jam_mulai: '07:00', jam_selesai: '10:30', icon: iconPagi },
+    { nama_shift: 'Siang', jam_mulai: '10:30', jam_selesai: '14:00', icon: iconSiang },
+    { nama_shift: 'Sore', jam_mulai: '14:00', jam_selesai: '17:00', icon: iconSore }
   ];
 
-  // Helper function to get current shift and time remaining
-  const getShiftStatus = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute; // Total minutes
+  const shiftIconMap = {
+    Pagi: iconPagi,
+    Siang: iconSiang,
+    Sore: iconSore,
+  };
 
-    return shifts.map(shift => {
-      const [startHour, startMinute] = shift.start.split(':').map(Number);
-      const [endHour, endMinute] = shift.end.split(':').map(Number);
-      
+  const normalizeTime = (time) => {
+    if (typeof time !== 'string') return '00:00';
+    const cleaned = time.trim();
+    return cleaned.length >= 5 ? cleaned.slice(0, 5) : cleaned.padEnd(5, '0');
+  };
+
+  const getShiftStatus = (shiftItems = shiftList) => {
+    const shiftsToUse = shiftItems.length ? shiftItems : fallbackShifts;
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    return shiftsToUse.map((shift) => {
+      const start = normalizeTime(shift.jam_mulai || shift.start || '00:00');
+      const end = normalizeTime(shift.jam_selesai || shift.end || '00:00');
+      const [startHour, startMinute] = start.split(':').map(Number);
+      const [endHour, endMinute] = end.split(':').map(Number);
+
       const startTime = startHour * 60 + startMinute;
       const endTime = endHour * 60 + endMinute;
-
       const isActive = currentTime >= startTime && currentTime < endTime;
-      
+
       let timeRemaining = 0;
       if (isActive) {
-        timeRemaining = endTime - currentTime; // Minutes remaining
+        timeRemaining = endTime - currentTime;
       } else if (currentTime < startTime) {
-        timeRemaining = startTime - currentTime; // Time until shift starts
-      } else {
-        timeRemaining = 0; // Shift already ended
+        timeRemaining = startTime - currentTime;
       }
 
-      // Convert minutes to HH:MM:SS format
       const hours = Math.floor(timeRemaining / 60);
       const minutes = timeRemaining % 60;
       const seconds = 0;
       const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+      const icon = shift.icon || shiftIconMap[shift.nama_shift] || shiftIconMap[shift.name] || iconPagi;
+      const name = shift.nama_shift || shift.name || 'Shift';
+
       return {
         ...shift,
+        name,
+        start,
+        end,
+        icon,
         isActive,
         timeRemaining: formattedTime,
-        isEnded: currentTime >= endTime
+        isEnded: currentTime >= endTime,
       };
     });
   };
 
-  const [shiftStatus, setShiftStatus] = useState(getShiftStatus());
+  useEffect(() => {
+    setShiftStatus(getShiftStatus(shiftList));
+  }, [shiftList]);
 
   // Update shift status every minute
   useEffect(() => {
     const interval = setInterval(() => {
-      setShiftStatus(getShiftStatus());
+      setShiftStatus(getShiftStatus(shiftList));
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
-  }, []);
+  }, [shiftList]);
 
   return (
     <div className="dashboard-container">
@@ -205,8 +315,8 @@ export default function Dashboard() {
               </div>
               <h2>{stats.tugasHariIni}</h2>
               <div className="stat-footer">
-                <p className="footer-main">Tugas Belum Selesai</p>
-                <p className="footer-sub">Dari {activePenugasan.length} Total Tugas</p>
+                <p className="footer-main">Tugas Hari Ini</p>
+                <p className="footer-sub">{footerSubs.tugasHariIni}</p>
               </div>
             </div>
 
@@ -218,7 +328,7 @@ export default function Dashboard() {
               <h2>{stats.areaTercover}</h2>
               <div className="stat-footer">
                 <p className="footer-main">Area dcheck</p>
-                <p className="footer-sub">Total Area: {activePenugasan.length > 0 ? activePenugasan.length : '0'}</p>
+                <p className="footer-sub">{footerSubs.areaTercover}</p>
               </div>
             </div>
 
@@ -229,8 +339,8 @@ export default function Dashboard() {
               </div>
               <h2>{stats.tugasSelesai}</h2>
               <div className="stat-footer">
-                <p className="footer-main">Tugas diselesaikan</p>
-                <p className="footer-sub">Tersisa {activePenugasan.length - stats.tugasSelesai}</p>
+                <p className="footer-main">Tugas Diselesaikan</p>
+                <p className="footer-sub">{footerSubs.tugasSelesai}</p>
               </div>
             </div>
 
@@ -263,8 +373,8 @@ export default function Dashboard() {
                 />
               </div>
               <div className="progress-legend">
-                <div className="legend-item"><i className="dot sudah"></i> Sudah</div>
-                <div className="legend-item"><i className="dot belum"></i> Belum</div>
+                <div className="legend-item"><i className="dot sudah"></i> Sudah Dinilai</div>
+                <div className="legend-item"><i className="dot belum"></i> Belum Dinilai</div>
               </div>
             </div>
           </div>

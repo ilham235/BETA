@@ -1,31 +1,30 @@
 import { useEffect, useState } from "react";
 import {
-  FiBarChart2,
-  FiCalendar,
-  FiChevronDown,
-  FiClipboard,
-  FiDownload,
-  FiPieChart,
-  FiPrinter,
-  FiSearch,
-  FiTrendingUp
+    FiBarChart2,
+    FiCalendar,
+    FiChevronDown,
+    FiClipboard,
+    FiDownload,
+    FiPieChart,
+    FiPrinter,
+    FiSearch,
+    FiTrendingUp
 } from "react-icons/fi";
 import {
-  Bar,
-  BarChart,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis, YAxis
+    Bar,
+    BarChart,
+    Cell,
+    Legend,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis, YAxis
 } from "recharts";
-import * as XLSX from "xlsx-js-style";
-import poto from "../assets/poto.jpg";
-import Sidebar from "../components/Sidebar";
+import * as XLSX from "xlsx";
+import AdminSidebar from "../components/AdminSidebar";
 import { penugasanAPI } from "../service/api";
 import "./Laporan.css";
 
@@ -72,39 +71,6 @@ const exportToExcel = (data, trendData = [], performaArea = [], distribusiData =
     });
     wsLaporan['!cols'] = colWidths;
     
-    // Tambahkan border dan style ke semua cell
-    const range = XLSX.utils.decode_range(wsLaporan['!ref']);
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!wsLaporan[cellRef]) continue;
-        
-        if (R === 0) {
-          wsLaporan[cellRef].s = {
-            font: { bold: true },
-            fill: { fgColor: { rgb: "E8F0FE" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } }
-            }
-          };
-        } else {
-          wsLaporan[cellRef].s = {
-            alignment: { horizontal: "left", vertical: "center", wrapText: true },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } }
-            }
-          };
-        }
-      }
-    }
-    
     XLSX.utils.book_append_sheet(wb, wsLaporan, "Data Laporan");
 
     // ==================== SHEET 2: TREND TUGAS HARIAN ====================
@@ -129,39 +95,6 @@ const exportToExcel = (data, trendData = [], performaArea = [], distribusiData =
         return { wch: maxLen + 3 };
       });
       wsTrend['!cols'] = trendColWidths;
-      
-      // Border untuk sheet trend
-      const trendRange = XLSX.utils.decode_range(wsTrend['!ref']);
-      for (let R = trendRange.s.r; R <= trendRange.e.r; R++) {
-        for (let C = trendRange.s.c; C <= trendRange.e.c; C++) {
-          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!wsTrend[cellRef]) continue;
-          
-          if (R === 0) {
-            wsTrend[cellRef].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: "E8F0FE" } },
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          } else {
-            wsTrend[cellRef].s = {
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          }
-        }
-      }
       
       XLSX.utils.book_append_sheet(wb, wsTrend, "Trend Tugas Harian");
     }
@@ -190,39 +123,6 @@ const exportToExcel = (data, trendData = [], performaArea = [], distribusiData =
         return { wch: maxLen + 3 };
       });
       wsArea['!cols'] = areaColWidths;
-      
-      // Border untuk sheet area
-      const areaRange = XLSX.utils.decode_range(wsArea['!ref']);
-      for (let R = areaRange.s.r; R <= areaRange.e.r; R++) {
-        for (let C = areaRange.s.c; C <= areaRange.e.c; C++) {
-          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!wsArea[cellRef]) continue;
-          
-          if (R === 0) {
-            wsArea[cellRef].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: "E8F0FE" } },
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          } else {
-            wsArea[cellRef].s = {
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          }
-        }
-      }
       
       XLSX.utils.book_append_sheet(wb, wsArea, "Performa Per Area");
     }
@@ -256,52 +156,6 @@ const exportToExcel = (data, trendData = [], performaArea = [], distribusiData =
       distColWidths.push({ wch: 15 }); // Kolom untuk total
       wsDist['!cols'] = distColWidths;
       
-      // Border untuk sheet distribusi
-      const distRange = XLSX.utils.decode_range(wsDist['!ref']);
-      for (let R = distRange.s.r; R <= distRange.e.r; R++) {
-        for (let C = distRange.s.c; C <= distRange.e.c; C++) {
-          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!wsDist[cellRef]) continue;
-          
-          if (R === 0) {
-            wsDist[cellRef].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: "E8F0FE" } },
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          } else if (R === distRange.e.r) {
-            // Baris total - bold
-            wsDist[cellRef].s = {
-              font: { bold: true },
-              fill: { fgColor: { rgb: "F0F0F0" } },
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          } else {
-            wsDist[cellRef].s = {
-              alignment: { horizontal: "center", vertical: "center" },
-              border: {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-              }
-            };
-          }
-        }
-      }
-      
       XLSX.utils.book_append_sheet(wb, wsDist, "Distribusi Penyelesaian");
     }
 
@@ -319,39 +173,6 @@ const exportToExcel = (data, trendData = [], performaArea = [], distribusiData =
     
     // Auto width untuk ringkasan
     wsRingkasan['!cols'] = [{ wch: 25 }, { wch: 20 }];
-    
-    // Border untuk sheet ringkasan
-    const ringkasanRange = XLSX.utils.decode_range(wsRingkasan['!ref']);
-    for (let R = ringkasanRange.s.r; R <= ringkasanRange.e.r; R++) {
-      for (let C = ringkasanRange.s.c; C <= ringkasanRange.e.c; C++) {
-        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!wsRingkasan[cellRef]) continue;
-        
-        if (R === 0) {
-          wsRingkasan[cellRef].s = {
-            font: { bold: true },
-            fill: { fgColor: { rgb: "E8F0FE" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } }
-            }
-          };
-        } else {
-          wsRingkasan[cellRef].s = {
-            alignment: { horizontal: "left", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } }
-            }
-          };
-        }
-      }
-    }
     
     XLSX.utils.book_append_sheet(wb, wsRingkasan, "Ringkasan");
     
@@ -678,9 +499,9 @@ export default function Laporan() {
 
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <Sidebar />
-        <main className="main-content">
+      <div className="laporan-page">
+        <AdminSidebar />
+        <main className="laporan-main">
           <div style={{ padding: "20px", textAlign: "center" }}>
             <p>⏳ Memuat data laporan...</p>
           </div>
@@ -690,28 +511,30 @@ export default function Laporan() {
   }
 
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <div className="laporan-page">
+      <AdminSidebar />
 
-      <main className="main-content">
+      <main className="laporan-main">
         <header className="topbar">
-          <div className="search-bar">
+          <div className="search-box">
             <FiSearch />
-            <input type="text" placeholder="Cari" />
+            <input type="text" placeholder="Cari laporan..." />
           </div>
-          <div className="user-profile">
-            <img src={poto} alt="avatar" className="avatar" />
-            <div className="user-info">
-              <p className="user-name">Wowo</p>
-              <p className="user-role">Pengawas</p>
+          <div className="user-box">
+            <div className="avatar">
+              {/* Avatar placeholder */}
             </div>
-            <FiChevronDown className="dropdown-icon" />
+            <div>
+              <h4>Admin</h4>
+              <p>Administrator</p>
+            </div>
+            <FiChevronDown />
           </div>
         </header>
 
-        <section className="content-inner">
-          <div className="laporan-header">
-            <div className="header-text">
+        <section className="content">
+          <div className="header">
+            <div>
               <h1>Laporan Kebersihan</h1>
               <p>Monitor dan analisis performa tugas kebersihan</p>
             </div>

@@ -36,9 +36,9 @@ export default function App() {
       <Route path="/admin/area" element={<AdminRoute><KelolaArea /></AdminRoute>} />
       <Route path="/admin/shift" element={<AdminRoute><KelolaShift /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><KelolaUser /></AdminRoute>} />
+      <Route path="/admin/laporan" element={<AdminRoute><Laporan /></AdminRoute>} />
       <Route path="/penugasan" element={<ProtectedRoute><PenugasanOB /></ProtectedRoute>} />
       <Route path="/pengawasan" element={<ProtectedRoute><Pengawasan /></ProtectedRoute>} />
-      <Route path="/laporan" element={<ProtectedRoute><Laporan/></ProtectedRoute>} />
       <Route path="/" element={<RoleBasedRedirect />} />
       <Route path="*" element={<RoleBasedRedirect />} />
     </Routes>

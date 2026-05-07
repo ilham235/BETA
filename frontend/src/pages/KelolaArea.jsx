@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import { useAuth } from "../context/AuthContext";
-import { areaAPI } from "../service/api";
+import { penugasanAPI } from "../service/api";
 import "./KelolaArea.css";
 
 import {
-  FiChevronDown,
-  FiEdit2,
-  FiPlus,
-  FiSearch,
-  FiTrash2,
-  FiX,
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2,
+    FiX,
 } from "react-icons/fi";
 
 export default function KelolaArea() {
@@ -23,7 +23,7 @@ export default function KelolaArea() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [editingArea, setEditingArea] = useState(null);
-  const [formData, setFormData] = useState({ nama: "", deskripsi: "", status: "aktif" });
+  const [formData, setFormData] = useState({ nama: "", lantai: "1", status: "aktif" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function KelolaArea() {
   const fetchArea = async () => {
     try {
       setLoading(true);
-      const res = await areaAPI.getAll();
+      const res = await penugasanAPI.getRuangan();
 
       if (res.data.success) {
         setAreas(res.data.data);
@@ -46,23 +46,21 @@ export default function KelolaArea() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Yakin hapus data?")) return;
-
-    try {
-      await areaAPI.delete(id);
-      fetchArea();
-    } catch (err) {
-      console.log(err);
-    }
+    // Delete not supported for ruangan via current backend API.
+    alert("Hapus ruangan belum tersedia. Silakan gunakan fitur edit jika tersedia.");
   };
 
   const handleOpenModal = (area = null) => {
     if (area) {
       setEditingArea(area);
-      setFormData({ nama: area.nama, deskripsi: area.deskripsi || "", status: area.status });
+      setFormData({
+        nama: area.nama_ruangan || "",
+        lantai: area.lantai ? String(area.lantai) : "1",
+        status: area.status || "aktif"
+      });
     } else {
       setEditingArea(null);
-      setFormData({ nama: "", deskripsi: "", status: "aktif" });
+      setFormData({ nama: "", lantai: "1", status: "aktif" });
     }
     setShowModal(true);
   };
@@ -70,7 +68,7 @@ export default function KelolaArea() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingArea(null);
-    setFormData({ nama: "", deskripsi: "", status: "aktif" });
+    setFormData({ nama: "", lantai: "1", status: "aktif" });
   };
 
   const handleSubmit = async (e) => {
@@ -83,12 +81,17 @@ export default function KelolaArea() {
     try {
       setSaving(true);
       if (editingArea) {
-        await areaAPI.update(editingArea.id_area, formData);
+        // Editing existing ruangan is not available in backend yet
+        alert("Edit ruangan belum didukung. Tutup dan buat ulang ruangan jika perlu.");
       } else {
-        await areaAPI.create(formData);
+          await penugasanAPI.createRuangan({
+          nama_ruangan: formData.nama,
+          lantai: formData.lantai,
+          status: formData.status,
+        });
+        handleCloseModal();
+        fetchArea();
       }
-      handleCloseModal();
-      fetchArea();
     } catch (err) {
       console.log(err);
       alert("Terjadi kesalahan");
@@ -98,7 +101,8 @@ export default function KelolaArea() {
   };
 
   const filteredArea = areas.filter((a) =>
-    a.nama.toLowerCase().includes(search.toLowerCase())
+    (a.nama_ruangan || "").toLowerCase().includes(search.toLowerCase()) ||
+    (String(a.lantai || "")).includes(search.toLowerCase())
   );
 
   return (
@@ -136,8 +140,8 @@ export default function KelolaArea() {
         <section className="content">
           <div className="header">
             <div>
-              <h1>Kelola Area</h1>
-              <p>Manajemen data area kebersihan</p>
+              <h1>Kelola Ruangan</h1>
+              <p>Manajemen data ruangan dan lantai</p>
             </div>
 
             <button className="btn-add" onClick={() => handleOpenModal()}>
@@ -150,8 +154,8 @@ export default function KelolaArea() {
             <table>
               <thead>
                 <tr>
-                  <th>Nama</th>
-                  <th>Deskripsi</th>
+                  <th>Nama Ruangan</th>
+                  <th>Lantai</th>
                   <th>Status</th>
                   <th>Aksi</th>
                 </tr>
@@ -166,10 +170,9 @@ export default function KelolaArea() {
                   </tr>
                 ) : filteredArea.length > 0 ? (
                   filteredArea.map((item) => (
-                    <tr key={item.id_area}>
-                      <td>{item.nama}</td>
-                      <td>{item.deskripsi}</td>
-
+                    <tr key={item.id_ruangan || item.id_area}>
+                      <td>{item.nama_ruangan || item.nama}</td>
+                      <td>{item.lantai || "-"}</td>
                       <td>
                         <span
                           className={`status ${
@@ -186,7 +189,7 @@ export default function KelolaArea() {
                         <FiEdit2 className="edit" onClick={() => handleOpenModal(item)} />
                         <FiTrash2
                           className="delete"
-                          onClick={() => handleDelete(item.id_area)}
+                          onClick={() => handleDelete(item.id_ruangan || item.id_area)}
                         />
                       </td>
                     </tr>
@@ -214,22 +217,23 @@ export default function KelolaArea() {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nama Area</label>
+                <label>Nama Ruangan</label>
                 <input
                   type="text"
                   value={formData.nama}
                   onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                  placeholder="Masukkan nama area"
+                  placeholder="Masukkan nama ruangan"
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Deskripsi</label>
-                <textarea
-                  value={formData.deskripsi}
-                  onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                  placeholder="Masukkan deskripsi area"
-                  rows="3"
+                <label>Lantai</label>
+                <input
+                  type="text"
+                  value={formData.lantai}
+                  onChange={(e) => setFormData({ ...formData, lantai: e.target.value })}
+                  placeholder="Masukkan lantai ruangan"
+                  required
                 />
               </div>
               <div className="form-group">

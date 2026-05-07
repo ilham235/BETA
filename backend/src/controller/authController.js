@@ -33,6 +33,13 @@ export const login = async (req, res) => {
       });
     }
 
+    if (user.status && user.status.toLowerCase() === "nonaktif") {
+      return res.status(403).json({
+        success: false,
+        message: "Anda tidak bisa login harap meminta persetujuan admin"
+      });
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { 

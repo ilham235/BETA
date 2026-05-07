@@ -11,11 +11,13 @@ export const findAllPenugasan = async () => {
         o.kontak,
         r.nama_ruangan,
         r.lantai,
-        r.detail_pekerjaan
+        t.nama_tugas as detail_pekerjaan,
+        t.status as status_tugas
       FROM penugasan p
       LEFT JOIN users u ON p.id_user = u.id_user
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       ORDER BY p.tanggal_awal DESC
     `);
     return result.rows;
@@ -36,11 +38,13 @@ export const findPenugasanById = async (id) => {
         o.kontak,
         r.nama_ruangan,
         r.lantai,
-        r.detail_pekerjaan
+        t.nama_tugas as detail_pekerjaan,
+        t.status as status_tugas
       FROM penugasan p
       LEFT JOIN users u ON p.id_user = u.id_user
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       WHERE p.id_penugasan = $1
     `, [id]);
     return result.rows[0];
@@ -56,6 +60,7 @@ export const createPenugasan = async (data) => {
       id_user: data.id_user,
       id_ob: data.id_ob,
       id_ruangan: data.id_ruangan,
+      id_tugas: data.id_tugas,
       tanggal_awal: data.tanggal_awal,
       tanggal_akhir: data.tanggal_akhir,
       kode_pengerjaan: data.kode_pengerjaan,
@@ -66,14 +71,15 @@ export const createPenugasan = async (data) => {
 
     const result = await pool.query(`
       INSERT INTO penugasan (
-        id_user, id_ob, id_ruangan, tanggal_awal, tanggal_akhir,
+        id_user, id_ob, id_ruangan, id_tugas, tanggal_awal, tanggal_akhir,
         kode_pengerjaan, shift, deskripsi, rolling_mingguan
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `, [
       data.id_user,
       data.id_ob,
       data.id_ruangan,
+      data.id_tugas || null,
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
@@ -95,6 +101,7 @@ export const updatePenugasan = async (id, data) => {
       id_user: data.id_user,
       id_ob: data.id_ob,
       id_ruangan: data.id_ruangan,
+      id_tugas: data.id_tugas,
       tanggal_awal: data.tanggal_awal,
       tanggal_akhir: data.tanggal_akhir,
       kode_pengerjaan: data.kode_pengerjaan,
@@ -108,18 +115,21 @@ export const updatePenugasan = async (id, data) => {
         id_user = $1,
         id_ob = $2,
         id_ruangan = $3,
-        tanggal_awal = $4,
-        tanggal_akhir = $5,
-        kode_pengerjaan = $6,
-        shift = $7,
-        deskripsi = $8,
-        rolling_mingguan = $9
-      WHERE id_penugasan = $10
+        id_tugas = $4,
+        tanggal_awal = $5,
+        tanggal_akhir = $6,
+        kode_pengerjaan = $7,
+        shift = $8,
+        deskripsi = $9,
+        rolling_mingguan = $10,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id_penugasan = $11
       RETURNING *
     `, [
       data.id_user,
       data.id_ob,
       data.id_ruangan,
+      data.id_tugas || null,
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
@@ -187,12 +197,36 @@ export const findAllRuangan = async () => {
 export const createRuangan = async (data) => {
   try {
     const result = await pool.query(
-      "INSERT INTO ruangan (nama_ruangan, lantai, detail_pekerjaan) VALUES ($1, $2, $3) RETURNING *",
-      [data.nama_ruangan, data.lantai, data.detail_pekerjaan]
+      "INSERT INTO ruangan (nama_ruangan, lantai, status) VALUES ($1, $2, COALESCE($3, 'aktif')) RETURNING *",
+      [data.nama_ruangan, data.lantai, data.status]
     );
     return result.rows[0];
   } catch (error) {
     console.error("Error creating ruangan:", error);
+    throw error;
+  }
+};
+
+// Tugas functions
+export const findAllTugas = async () => {
+  try {
+    const result = await pool.query("SELECT * FROM tugas ORDER BY nama_tugas");
+    return result.rows;
+  } catch (error) {
+    console.error("Error finding all tugas:", error);
+    throw error;
+  }
+};
+
+export const createTugas = async (data) => {
+  try {
+    const result = await pool.query(
+      "INSERT INTO tugas (nama_tugas, status) VALUES ($1, COALESCE($2, 'aktif')) RETURNING *",
+      [data.nama_tugas, data.status]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error creating tugas:", error);
     throw error;
   }
 };
@@ -208,11 +242,12 @@ export const findAllLaporan = async (tanggal) => {
         o.nama_ob,
         r.nama_ruangan,
         r.lantai,
-        r.detail_pekerjaan
+        t.nama_tugas as detail_pekerjaan
       FROM laporan l
       LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       ${tanggal ? "WHERE DATE(l.tanggal) = $1" : ""}
       ORDER BY l.created_at DESC
     `;
@@ -235,11 +270,12 @@ export const findLaporanByPenugasan = async (id_penugasan, tanggal) => {
         o.nama_ob,
         r.nama_ruangan,
         r.lantai,
-        r.detail_pekerjaan
+        t.nama_tugas as detail_pekerjaan
       FROM laporan l
       LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       WHERE l.id_penugasan = $1
       ${tanggal ? "AND DATE(l.tanggal) = $2" : ""}
       ORDER BY l.created_at DESC
@@ -366,6 +402,49 @@ export const updateLaporan = async (id_laporan, data) => {
     return result.rows[0];
   } catch (error) {
     console.error("❌ Error updating laporan:", error);
+    throw error;
+  }
+};
+
+// ==================== AKTIVITAS ====================
+
+export const findAllAktivitas = async (limit = 10) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM aktivitas
+      ORDER BY created_at DESC
+      LIMIT $1
+    `, [limit]);
+    return result.rows;
+  } catch (error) {
+    console.error("Error finding all aktivitas:", error);
+    throw error;
+  }
+};
+
+export const createAktivitas = async (data) => {
+  try {
+    const result = await pool.query(`
+      INSERT INTO aktivitas (
+        id_user, nama_user, role_user, tipe_aktivitas, aksi,
+        nama_entitas, id_entitas, detail, area_terkait, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+    `, [
+      data.id_user,
+      data.nama_user || null,
+      data.role_user || null,
+      data.tipe_aktivitas,
+      data.aksi,
+      data.nama_entitas || null,
+      data.id_entitas || null,
+      data.detail || null,
+      data.area_terkait || null,
+      data.status || 'selesai'
+    ]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error creating aktivitas:", error);
     throw error;
   }
 };

@@ -51,6 +51,8 @@ export const penugasanAPI = {
   delete: (id) => apiClient.delete(`/penugasan/${id}`),
   getOB: () => apiClient.get("/penugasan/ob/all"),
   getRuangan: () => apiClient.get("/penugasan/ruangan/all"),
+  createRuangan: (data) => apiClient.post("/penugasan/ruangan", data),
+  getTugas: () => apiClient.get("/penugasan/tugas/all"),
   createLaporan: (data) => apiClient.post("/penugasan/laporan", data),
   getLaporan: (tanggal) => apiClient.get("/penugasan/laporan/all", {
     params: tanggal ? { tanggal } : {}
@@ -59,6 +61,10 @@ export const penugasanAPI = {
     params: tanggal ? { tanggal } : {}
   }),
   updateLaporan: (id_laporan, data) => apiClient.put(`/penugasan/laporan/${id_laporan}`, data),
+  getAktivitas: (limit) => apiClient.get("/penugasan/aktivitas/all", {
+    params: limit ? { limit } : {}
+  }),
+  createAktivitas: (data) => apiClient.post("/penugasan/aktivitas", data),
 };
 
 export const adminAPI = {

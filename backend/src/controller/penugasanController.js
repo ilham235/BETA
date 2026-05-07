@@ -1,13 +1,17 @@
 import {
+    createAktivitas,
     createLaporan,
     createOB,
     createPenugasan,
     createRuangan,
+    createTugas,
     deletePenugasan,
+    findAllAktivitas,
     findAllLaporan,
     findAllOB,
     findAllPenugasan,
     findAllRuangan,
+    findAllTugas,
     findLaporanByPenugasan,
     findPenugasanById,
     updateLaporan,
@@ -232,6 +236,48 @@ export const createNewRuangan = async (req, res) => {
   }
 };
 
+export const getTugas = async (req, res) => {
+  try {
+    const tugas = await findAllTugas();
+    res.json({
+      success: true,
+      data: tugas
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const createNewTugas = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data.nama_tugas) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama tugas harus diisi"
+      });
+    }
+
+    const tugas = await createTugas(data);
+    res.status(201).json({
+      success: true,
+      message: "Tugas berhasil dibuat",
+      data: tugas
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 // LAPORAN CRUD
 export const getLaporan = async (req, res) => {
   try {
@@ -355,6 +401,61 @@ export const updateLaporanController = async (req, res) => {
     console.error("Error message:", error.message);
     console.error("Full error:", error);
     
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// ==================== AKTIVITAS ====================
+
+export const getAktivitas = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    console.log(`📝 [getAktivitas] Mengambil aktivitas dengan limit: ${limit}`);
+    
+    const aktivitas = await findAllAktivitas(limit);
+    console.log(`✅ [getAktivitas] Berhasil mengambil ${aktivitas.length} aktivitas`);
+    
+    res.json({
+      success: true,
+      data: aktivitas
+    });
+  } catch (error) {
+    console.error("❌ [getAktivitas] Error:", error.message);
+    console.error("❌ Stack trace:", error.stack);
+    res.status(500).json({
+      success: false,
+      message: "Error mengambil aktivitas",
+      error: error.message
+    });
+  }
+};
+
+export const createNewAktivitas = async (req, res) => {
+  try {
+    const data = req.body;
+    console.log("📝 [createNewAktivitas] Data diterima:", data);
+
+    // Validasi input
+    if (!data.id_user || !data.tipe_aktivitas || !data.aksi) {
+      console.warn("⚠️ Data tidak lengkap:", { id_user: data.id_user, tipe_aktivitas: data.tipe_aktivitas, aksi: data.aksi });
+      return res.status(400).json({
+        success: false,
+        message: "Data tidak lengkap. Pastikan id_user, tipe_aktivitas, dan aksi diisi"
+      });
+    }
+
+    const aktivitas = await createAktivitas(data);
+    console.log("✅ Aktivitas berhasil dibuat:", aktivitas);
+    res.status(201).json({
+      success: true,
+      message: "Aktivitas berhasil dicatat",
+      data: aktivitas
+    });
+  } catch (error) {
+    console.error("❌ Error creating aktivitas:", error);
     res.status(500).json({
       success: false,
       error: error.message

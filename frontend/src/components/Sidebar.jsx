@@ -44,10 +44,6 @@ export default function Sidebar() {
         <Link to="/pengawasan" className={`menu-item ${location.pathname === '/pengawasan' ? 'active' : ''}`}>
           <FiFileText /> Pengawasan
         </Link>
-        
-        <Link to="/laporan" className={`menu-item ${location.pathname === '/laporan' ? 'active' : ''}`}>
-          <FiFileText /> Laporan
-        </Link>
 
         <p className="menu-label" style={{ marginTop: "30px" }}>UMUM</p>
         
