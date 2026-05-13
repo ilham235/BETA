@@ -6,6 +6,7 @@ import {
     createRuangan,
     createTugas,
     deletePenugasan,
+    deleteTugas,
     findAllAktivitas,
     findAllLaporan,
     findAllOB,
@@ -15,7 +16,8 @@ import {
     findLaporanByPenugasan,
     findPenugasanById,
     updateLaporan,
-    updatePenugasan
+    updatePenugasan,
+    updateTugas
 } from "../models/penugasanModel.js";
 
 // PENUGASAN CRUD
@@ -268,6 +270,58 @@ export const createNewTugas = async (req, res) => {
       success: true,
       message: "Tugas berhasil dibuat",
       data: tugas
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const updateExistingTugas = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    const tugas = await updateTugas(id, data);
+    if (!tugas) {
+      return res.status(404).json({
+        success: false,
+        message: "Tugas tidak ditemukan"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Tugas berhasil diupdate",
+      data: tugas
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const deleteExistingTugas = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tugas = await deleteTugas(id);
+
+    if (!tugas) {
+      return res.status(404).json({
+        success: false,
+        message: "Tugas tidak ditemukan"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Tugas berhasil dihapus"
     });
   } catch (error) {
     console.error(error);

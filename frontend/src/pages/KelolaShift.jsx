@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
+import DeleteConfirmation from "../components/DeleteConfirmation";
 import { useAuth } from "../context/AuthContext";
 import { shiftAPI } from "../service/api";
 import "./KelolaShift.css";
@@ -22,6 +23,10 @@ export default function KelolaShift() {
   const [showModal, setShowModal] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     nama_shift: "",
@@ -48,14 +53,24 @@ export default function KelolaShift() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Yakin hapus shift?")) return;
+  const handleDelete = (item) => {
+    setDeleteItem(item);
+    setShowDeleteModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteItem) return;
+
+    setIsDeleting(true);
     try {
-      await shiftAPI.delete(id);
+      await shiftAPI.delete(deleteItem.id_shift);
       fetchShift();
+      setShowDeleteModal(false);
+      setDeleteItem(null);
     } catch (err) {
       console.log(err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -176,7 +191,7 @@ export default function KelolaShift() {
 
                       <td className="aksi">
                         <FiEdit2 onClick={() => handleOpenModal(item)} />
-                        <FiTrash2 onClick={() => handleDelete(item.id_shift)} />
+                        <FiTrash2 onClick={() => handleDelete(item)} />
                       </td>
                     </tr>
                   ))
@@ -240,6 +255,18 @@ export default function KelolaShift() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmation
+        show={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteItem(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Shift"
+        message={`Apakah Anda yakin ingin menghapus shift "${deleteItem?.nama_shift}"? Tindakan ini tidak dapat dibatalkan.`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

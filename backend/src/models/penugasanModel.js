@@ -231,6 +231,32 @@ export const createTugas = async (data) => {
   }
 };
 
+export const updateTugas = async (id, data) => {
+  try {
+    const result = await pool.query(
+      "UPDATE tugas SET nama_tugas = COALESCE($1, nama_tugas), status = COALESCE($2, status) WHERE id_tugas = $3 RETURNING *",
+      [data.nama_tugas, data.status, id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error updating tugas:", error);
+    throw error;
+  }
+};
+
+export const deleteTugas = async (id) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM tugas WHERE id_tugas = $1 RETURNING *",
+      [id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error deleting tugas:", error);
+    throw error;
+  }
+};
+
 // LAPORAN functions
 export const findAllLaporan = async (tanggal) => {
   try {

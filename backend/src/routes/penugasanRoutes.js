@@ -7,6 +7,7 @@ import {
     createNewRuangan,
     createNewTugas,
     deleteExistingPenugasan,
+    deleteExistingTugas,
     getAktivitas,
     getLaporan,
     getLaporanByPenugasan,
@@ -16,6 +17,7 @@ import {
     getRuangan,
     getTugas,
     updateExistingPenugasan,
+    updateExistingTugas,
     updateLaporanController
 } from "../controller/penugasanController.js";
 
@@ -49,6 +51,8 @@ router.post("/ruangan", createNewRuangan);
 // TUGAS ROUTES
 router.get("/tugas/all", getTugas);
 router.post("/tugas", createNewTugas);
+router.put("/tugas/:id", updateExistingTugas);
+router.delete("/tugas/:id", deleteExistingTugas);
 
 // AKTIVITAS ADMIN ROUTES
 router.get("/aktivitas/all", getAktivitas);

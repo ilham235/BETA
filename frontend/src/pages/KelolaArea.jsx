@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
+import DeleteConfirmation from "../components/DeleteConfirmation";
 import { useAuth } from "../context/AuthContext";
-import { penugasanAPI } from "../service/api";
+import { areaAPI, penugasanAPI } from "../service/api";
 import "./KelolaArea.css";
 
 import {
-    FiChevronDown,
-    FiEdit2,
-    FiPlus,
-    FiSearch,
-    FiTrash2,
-    FiX,
+  FiChevronDown,
+  FiEdit2,
+  FiPlus,
+  FiSearch,
+  FiTrash2,
+  FiX,
 } from "react-icons/fi";
 
 export default function KelolaArea() {
@@ -25,6 +26,10 @@ export default function KelolaArea() {
   const [editingArea, setEditingArea] = useState(null);
   const [formData, setFormData] = useState({ nama: "", lantai: "1", status: "aktif" });
   const [saving, setSaving] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchArea();
@@ -45,9 +50,26 @@ export default function KelolaArea() {
     }
   };
 
-  const handleDelete = async (id) => {
-    // Delete not supported for ruangan via current backend API.
-    alert("Hapus ruangan belum tersedia. Silakan gunakan fitur edit jika tersedia.");
+  const handleDelete = (item) => {
+    setDeleteItem(item);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteItem) return;
+
+    setIsDeleting(true);
+    try {
+      await areaAPI.delete(deleteItem.id_ruangan || deleteItem.id_area);
+      await fetchArea();
+      setShowDeleteModal(false);
+      setDeleteItem(null);
+    } catch (err) {
+      console.log(err);
+      alert("Gagal menghapus area. Silakan coba lagi.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleOpenModal = (area = null) => {
@@ -189,7 +211,7 @@ export default function KelolaArea() {
                         <FiEdit2 className="edit" onClick={() => handleOpenModal(item)} />
                         <FiTrash2
                           className="delete"
-                          onClick={() => handleDelete(item.id_ruangan || item.id_area)}
+                          onClick={() => handleDelete(item)}
                         />
                       </td>
                     </tr>
@@ -258,6 +280,18 @@ export default function KelolaArea() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmation
+        show={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteItem(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Area"
+        message={`Apakah Anda yakin ingin menghapus area "${deleteItem?.nama_ruangan || deleteItem?.nama}"? Tindakan ini tidak dapat dibatalkan.`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

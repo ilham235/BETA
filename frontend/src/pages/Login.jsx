@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo.png";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +12,17 @@ export default function Login() {
   const [localError, setLocalError] = useState("");
   const [remember, setRemember] = useState(false);
 
+  // Load remembered username on component mount
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("rememberUsername");
+    const storedRemember = localStorage.getItem("rememberMe") === "true";
+    
+    if (storedUsername && storedRemember) {
+      setUsername(storedUsername);
+      setRemember(true);
+    }
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLocalError("");
@@ -24,9 +35,16 @@ export default function Login() {
 
     try {
       const result = await login(username, password);
+      
+      // Handle remember me functionality
       if (remember) {
         localStorage.setItem("rememberUsername", username);
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberUsername");
+        localStorage.removeItem("rememberMe");
       }
+      
       // Arahkan berdasarkan role user
       if (result.user && result.user.role === "admin") {
         navigate("/admin");
@@ -37,9 +55,6 @@ export default function Login() {
       setLocalError(err.response?.data?.message || "Login gagal. Silahkan coba lagi.");
     }
   };
-
-  // Restore username jika remember sebelumnya
-  const storedUsername = localStorage.getItem("rememberUsername");
 
   const displayError = localError || error;
 

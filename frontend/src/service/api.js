@@ -67,6 +67,13 @@ export const penugasanAPI = {
   createAktivitas: (data) => apiClient.post("/penugasan/aktivitas", data),
 };
 
+export const tugasAPI = {
+  getAll: () => apiClient.get("/penugasan/tugas/all"),
+  create: (data) => apiClient.post("/penugasan/tugas", data),
+  update: (id, data) => apiClient.put(`/penugasan/tugas/${id}`, data),
+  delete: (id) => apiClient.delete(`/penugasan/tugas/${id}`),
+};
+
 export const adminAPI = {
   getDashboardStats: () => apiClient.get("/admin/dashboard"),
   getAllUsers: () => apiClient.get("/admin/users"),

@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
+import DeleteConfirmation from "../components/DeleteConfirmation";
 import { useAuth } from "../context/AuthContext";
 import { adminAPI } from "../service/api";
 import "./KelolaUser.css";
 
 import {
-  FiChevronDown,
-  FiEdit2,
-  FiPlus,
-  FiSearch,
-  FiTrash2,
-  FiX,
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2,
+    FiX,
 } from "react-icons/fi";
 
 export default function KelolaUser() {
@@ -24,6 +25,10 @@ export default function KelolaUser() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     nama_lengkap: "",
@@ -51,14 +56,24 @@ export default function KelolaUser() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Yakin hapus user?")) return;
+  const handleDelete = (item) => {
+    setDeleteItem(item);
+    setShowDeleteModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteItem) return;
+
+    setIsDeleting(true);
     try {
-      await adminAPI.deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.id_user !== id));
+      await adminAPI.deleteUser(deleteItem.id_user);
+      setUsers((prev) => prev.filter((u) => u.id_user !== deleteItem.id_user));
+      setShowDeleteModal(false);
+      setDeleteItem(null);
     } catch (err) {
       alert(err.response?.data?.message || "Gagal menghapus user");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -273,7 +288,7 @@ export default function KelolaUser() {
                           style={{ color: "#3b82f6", cursor: "pointer" }}
                         />
                         <FiTrash2 
-                          onClick={() => handleDelete(item.id_user)} 
+                          onClick={() => handleDelete(item)} 
                           style={{ color: "#ef4444", cursor: "pointer", marginLeft: "12px" }}
                         />
                       </td>
@@ -359,6 +374,18 @@ export default function KelolaUser() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmation
+        show={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteItem(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Hapus User"
+        message={`Apakah Anda yakin ingin menghapus user "${deleteItem?.nama_lengkap}"? Tindakan ini tidak dapat dibatalkan.`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

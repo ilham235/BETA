@@ -24,7 +24,7 @@ export const createArea = async (data) => {
   try {
     const result = await pool.query(
       "INSERT INTO ruangan (nama_ruangan, lantai, status) VALUES ($1, $2, $3) RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
-      [data.nama, data.deskripsi || 'Lantai 1', data.status || "aktif"]
+      [data.nama, data.lantai || '1', data.status || "aktif"]
     );
     return result.rows[0];
   } catch (error) {
@@ -37,7 +37,7 @@ export const updateArea = async (id, data) => {
   try {
     const result = await pool.query(
       "UPDATE ruangan SET nama_ruangan = $1, lantai = $2, status = $3 WHERE id_ruangan = $4 RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
-      [data.nama, data.deskripsi || 'Lantai 1', data.status, id]
+      [data.nama, data.lantai || '1', data.status, id]
     );
     return result.rows[0];
   } catch (error) {
@@ -49,7 +49,7 @@ export const updateArea = async (id, data) => {
 export const deleteArea = async (id) => {
   try {
     const result = await pool.query(
-      "DELETE FROM area WHERE id_area = $1 RETURNING *",
+      "DELETE FROM ruangan WHERE id_ruangan = $1 RETURNING *",
       [id]
     );
     return result.rows[0];

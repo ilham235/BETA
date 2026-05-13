@@ -30,6 +30,8 @@ CREATE TABLE ruangan (
 CREATE TABLE tugas (
   id_tugas SERIAL PRIMARY KEY,
   nama_tugas VARCHAR(100) NOT NULL,
+  deskripsi TEXT,
+  kategori VARCHAR(50) DEFAULT 'Pembersihan',
   status VARCHAR(20) DEFAULT 'aktif' CHECK (status IN ('aktif', 'non-aktif')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

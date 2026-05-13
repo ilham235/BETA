@@ -245,8 +245,15 @@ td {
   padding: 10px 20px;
   border: 1px solid #ddd;
   background: white;
+  color: black;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-cancel:hover,
+.btn-cancel:focus {
+  background: #e5e7eb;
 }
 
 .btn-save {
