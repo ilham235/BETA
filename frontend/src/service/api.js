@@ -53,14 +53,24 @@ export const penugasanAPI = {
   getRuangan: () => apiClient.get("/penugasan/ruangan/all"),
   createRuangan: (data) => apiClient.post("/penugasan/ruangan", data),
   getTugas: () => apiClient.get("/penugasan/tugas/all"),
-  createLaporan: (data) => apiClient.post("/penugasan/laporan", data),
+  createLaporan: (data, isFormData = false) => {
+    const config = isFormData ? {
+      headers: { "Content-Type": "multipart/form-data" }
+    } : {};
+    return apiClient.post("/penugasan/laporan", data, config);
+  },
   getLaporan: (tanggal) => apiClient.get("/penugasan/laporan/all", {
     params: tanggal ? { tanggal } : {}
   }),
   getLaporanByPenugasan: (id_penugasan, tanggal) => apiClient.get(`/penugasan/laporan/${id_penugasan}`, {
     params: tanggal ? { tanggal } : {}
   }),
-  updateLaporan: (id_laporan, data) => apiClient.put(`/penugasan/laporan/${id_laporan}`, data),
+  updateLaporan: (id_laporan, data, isFormData = false) => {
+    const config = isFormData ? {
+      headers: { "Content-Type": "multipart/form-data" }
+    } : {};
+    return apiClient.put(`/penugasan/laporan/${id_laporan}`, data, config);
+  },
   getAktivitas: (limit) => apiClient.get("/penugasan/aktivitas/all", {
     params: limit ? { limit } : {}
   }),

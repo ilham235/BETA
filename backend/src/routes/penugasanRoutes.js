@@ -1,4 +1,5 @@
 import express from "express";
+import upload from "../config/multerConfig.js";
 import {
     createNewAktivitas,
     createNewLaporan,
@@ -33,9 +34,9 @@ router.use((req, res, next) => {
 console.log("🔧 Registering LAPORAN routes...");
 router.get("/laporan/all", getLaporan);
 console.log("✅ Registered: GET /laporan/all");
-router.post("/laporan", createNewLaporan);
+router.post("/laporan", upload.single("foto"), createNewLaporan);
 console.log("✅ Registered: POST /laporan");
-router.put("/laporan/:id_laporan", updateLaporanController);
+router.put("/laporan/:id_laporan", upload.single("foto"), updateLaporanController);
 console.log("✅ Registered: PUT /laporan/:id_laporan");
 router.get("/laporan/:id_penugasan", getLaporanByPenugasan);
 console.log("✅ Registered: GET /laporan/:id_penugasan");

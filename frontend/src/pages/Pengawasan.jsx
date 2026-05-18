@@ -91,19 +91,21 @@ export default function Pengawasan() {
           const laporanResponse = await penugasanAPI.getLaporan(todayString);
           const laporanDataArray = laporanResponse.data.data || [];
           
-          // Create map: id_penugasan -> laporan data
+          // Create map: id_penugasan (string) -> laporan data
           const laporan = {};
           laporanDataArray.forEach(report => {
-            laporan[report.id_penugasan] = report;
+            laporan[String(report.id_penugasan)] = report;
           });
           setLaporanMap(laporan);
 
           // Update status item berdasarkan laporan hari ini
           const updatedData = filteredData.map(item => ({
             ...item,
-            status: laporan[item.id_penugasan] ? "Selesai" : ""
+            status: laporan[String(item.id_penugasan)] ? "Selesai" : ""
           }));
           
+          console.log("[Pengawasan] laporanMap keys after initial fetch:", Object.keys(laporan));
+          console.log("[Pengawasan] updatedData sample:", updatedData.slice(0,3));
           setDataTugas(updatedData);
         } catch (laporanErr) {
           console.error("Error fetching laporan:", laporanErr);
@@ -210,48 +212,48 @@ export default function Pengawasan() {
                 ) : (
                   filtered.map((item) => (
                     <tr key={item.id_penugasan}>
-                      <td>{item.area}</td>
-                      <td>{item.tugas}</td>
-                      <td>{item.shift}</td>
-                      <td>{laporanMap[item.id_penugasan]?.person_assigned || item.petugas}</td>
-                      <td>
-                        {laporanMap[item.id_penugasan] ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span className="color-box-p" style={{
-                              backgroundColor: 
-                                laporanMap[item.id_penugasan]?.nilai === "green" ? "#28a745" :
-                                laporanMap[item.id_penugasan]?.nilai === "yellow" ? "#ffc107" :
-                                laporanMap[item.id_penugasan]?.nilai === "red" ? "#dc3545" : "#ccc"
-                            }}></span>
-                            <span style={{ fontSize: "13px", fontWeight: "500", color: "#4a4a4a" }}>
-                              {laporanMap[item.id_penugasan]?.nilai === "green" ? "Selesai" :
-                               laporanMap[item.id_penugasan]?.nilai === "yellow" ? "Selesai" :
-                               laporanMap[item.id_penugasan]?.nilai === "red" ? "Belum Selesai" : "-"}
-                            </span>
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span className="color-box-p" style={{
-                              backgroundColor: "#d3d3d3"
-                            }}></span>
-                            <span style={{ fontSize: "13px", fontWeight: "500", color: "#999999" }}>
-                              Belum Dinilai
-                            </span>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {laporanMap[item.id_penugasan] ? (
-                          <button className="btn-detail" onClick={() => setModalDetail(item)}>
-                            <FiInfo /> Detail
-                          </button>
-                        ) : (
-                          <button className="btn-nilai" onClick={() => setModalNilai(item)}>
-                            <FiStar /> Nilai
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                          <td>{item.area}</td>
+                          <td>{item.tugas}</td>
+                          <td>{item.shift}</td>
+                          <td>{laporanMap[String(item.id_penugasan)]?.person_assigned || item.petugas}</td>
+                          <td>
+                            {laporanMap[String(item.id_penugasan)] ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className="color-box-p" style={{
+                                  backgroundColor: 
+                                    laporanMap[String(item.id_penugasan)]?.nilai === "green" ? "#28a745" :
+                                    laporanMap[String(item.id_penugasan)]?.nilai === "yellow" ? "#ffc107" :
+                                    laporanMap[String(item.id_penugasan)]?.nilai === "red" ? "#dc3545" : "#ccc"
+                                }}></span>
+                                <span style={{ fontSize: "13px", fontWeight: "500", color: "#4a4a4a" }}>
+                                  {laporanMap[String(item.id_penugasan)]?.nilai === "green" ? "Selesai" :
+                                   laporanMap[String(item.id_penugasan)]?.nilai === "yellow" ? "Perlu Tindak Lanjut" :
+                                   laporanMap[String(item.id_penugasan)]?.nilai === "red" ? "Belum Selesai" : "-"}
+                                </span>
+                              </div>
+                            ) : (
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className="color-box-p" style={{
+                                  backgroundColor: "#d3d3d3"
+                                }}></span>
+                                <span style={{ fontSize: "13px", fontWeight: "500", color: "#999999" }}>
+                                  Belum Dinilai
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {laporanMap[String(item.id_penugasan)] ? (
+                              <button className="btn-detail" onClick={() => setModalDetail(item)}>
+                                <FiInfo /> Detail
+                              </button>
+                            ) : (
+                              <button className="btn-nilai" onClick={() => setModalNilai(item)}>
+                                <FiStar /> Nilai
+                              </button>
+                            )}
+                          </td>
+                        </tr>
                   ))
                 )}
               </tbody>
@@ -271,8 +273,8 @@ export default function Pengawasan() {
             penugasanAPI.getLaporan(todayString).then(res => {
               const laporan = {};
               (res.data.data || []).forEach(report => {
-                if (!laporan[report.id_penugasan]) {
-                  laporan[report.id_penugasan] = report;
+                if (!laporan[String(report.id_penugasan)]) {
+                  laporan[String(report.id_penugasan)] = report;
                 }
               });
               setLaporanMap(laporan);
@@ -288,7 +290,15 @@ export default function Pengawasan() {
                   end.setHours(0, 0, 0, 0);
                   return item.statusInput === "Lengkap" && now >= start && now <= end;
                 });
-                setDataTugas(filtered);
+
+                // Apply laporan map to each item so UI reflects latest status immediately
+                console.log("[Pengawasan] laporanMap keys after modalNilai close:", Object.keys(laporan));
+                const finalData = filtered.map(item => ({
+                  ...item,
+                  status: laporan[String(item.id_penugasan)] ? "Selesai" : ""
+                }));
+                console.log("[Pengawasan] finalData sample after modalNilai:", finalData.slice(0,3));
+                setDataTugas(finalData);
               }).catch(err => console.error("Error refetching penugasan:", err));
             }).catch(err => console.error("Error refetching laporan:", err));
           }}
@@ -299,18 +309,38 @@ export default function Pengawasan() {
       {modalDetail && (
         <Detail
           data={modalDetail}
-          laporanData={laporanMap[modalDetail.id_penugasan]}
+          laporanData={laporanMap[String(modalDetail.id_penugasan)]}
           onClose={() => setModalDetail(null)}
           onUpdateSuccess={() => {
             // Refresh data setelah update
             setModalDetail(null);
             // Re-fetch laporan
-            penugasanAPI.getLaporan().then(res => {
+            const todayString = new Date().toLocaleDateString('en-CA');
+            penugasanAPI.getLaporan(todayString).then(res => {
               const laporan = {};
               (res.data.data || []).forEach(report => {
-                laporan[report.id_penugasan] = report;
+                laporan[String(report.id_penugasan)] = report;
               });
               setLaporanMap(laporan);
+              console.log("[Pengawasan] laporanMap keys after modalDetail update:", Object.keys(laporan));
+              // Also refresh penugasan list and apply status
+              penugasanAPI.getAll().then(res2 => {
+                const updatedData = (res2.data.data || []).map(transformItem);
+                const filtered = updatedData.filter((item) => {
+                  const start = new Date(item.tanggalAwal);
+                  const end = new Date(item.tanggalAkhir);
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  start.setHours(0, 0, 0, 0);
+                  end.setHours(0, 0, 0, 0);
+                  return item.statusInput === "Lengkap" && now >= start && now <= end;
+                });
+                const finalData = filtered.map(item => ({
+                  ...item,
+                  status: laporan[item.id_penugasan] ? "Selesai" : ""
+                }));
+                setDataTugas(finalData);
+              }).catch(err => console.error("Error refetching penugasan:", err));
             }).catch(err => console.error("Error refetching laporan:", err));
           }}
         />

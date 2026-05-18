@@ -1,3 +1,5 @@
+import fs from "fs/promises";
+import path from "path";
 import {
     createAktivitas,
     createLaporan,
@@ -13,12 +15,31 @@ import {
     findAllPenugasan,
     findAllRuangan,
     findAllTugas,
+    findLaporanById,
     findLaporanByPenugasan,
     findPenugasanById,
     updateLaporan,
     updatePenugasan,
     updateTugas
 } from "../models/penugasanModel.js";
+
+const getUploadFilePath = (fotoPath) => {
+  if (!fotoPath) return null;
+  return path.join(process.cwd(), "src", "upload", path.basename(fotoPath));
+};
+
+const deleteLocalFile = async (filePath) => {
+  if (!filePath) return;
+  try {
+    await fs.access(filePath);
+    await fs.unlink(filePath);
+    console.log(`🗑️ Deleted upload file: ${filePath}`);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      console.warn(`⚠️ Cannot delete upload file ${filePath}:`, err.message);
+    }
+  }
+};
 
 // PENUGASAN CRUD
 export const getPenugasan = async (req, res) => {
@@ -381,12 +402,56 @@ export const createNewLaporan = async (req, res) => {
     const data = req.body;
 
     console.log("📥 Body yang diterima di controller:", JSON.stringify(data, null, 2));
+    console.log("📁 File yang diunggah:", req.file ? req.file.filename : "tidak ada");
 
     // Validasi minimal: hanya id_penugasan, tanggal, dan status_kehadiran yang wajib
     if (!data.id_penugasan || !data.tanggal || !data.status_kehadiran) {
       return res.status(400).json({
         success: false,
         message: "Data tidak lengkap. Pastikan id_penugasan, tanggal, dan status_kehadiran diisi"
+      });
+    }
+
+    // Jika ada file yang diunggah, simpan path-nya
+    if (req.file) {
+      data.foto_path = `uploads/${req.file.filename}`;
+      console.log("📷 Path foto yang disimpan:", data.foto_path);
+    }
+
+    // Cari laporan yang sudah ada
+    const existingLaporan = await findLaporanByPenugasan(data.id_penugasan, data.tanggal);
+
+    if (existingLaporan && req.file && existingLaporan.foto_path) {
+      const oldFile = getUploadFilePath(existingLaporan.foto_path);
+      await deleteLocalFile(oldFile);
+    }
+
+    if (data.nilai === "green") {
+      if (req.file) {
+        const newFile = getUploadFilePath(data.foto_path);
+        await deleteLocalFile(newFile);
+      }
+      if (existingLaporan?.foto_path) {
+        const oldFile = getUploadFilePath(existingLaporan.foto_path);
+        await deleteLocalFile(oldFile);
+      }
+      data.foto_path = null;
+      console.log("🧹 Nilai green di create/update, foto akan dihapus dari data jika ada");
+    }
+
+    // Periksa apakah laporan untuk penugasan dan tanggal ini sudah ada
+    if (existingLaporan) {
+      console.log("🔄 Laporan sudah ada untuk penugasan ini dan tanggal ini. Mengupdate data yang sudah ada.", {
+        id_laporan: existingLaporan.id_laporan,
+        id_penugasan: existingLaporan.id_penugasan,
+        tanggal: existingLaporan.tanggal
+      });
+
+      const updatedLaporan = await updateLaporan(existingLaporan.id_laporan, data);
+      return res.json({
+        success: true,
+        message: "Laporan berhasil diupdate",
+        data: updatedLaporan
       });
     }
 
@@ -399,7 +464,7 @@ export const createNewLaporan = async (req, res) => {
     console.log("  - person_assigned:", data.person_assigned, "type:", typeof data.person_assigned);
     console.log("  - nilai:", data.nilai, "type:", typeof data.nilai);
     console.log("  - id_user_pengawas:", data.id_user_pengawas, "type:", typeof data.id_user_pengawas);
-    console.log("  - foto_path length:", data.foto_path ? data.foto_path.length : "null");
+    console.log("  - foto_path:", data.foto_path);
 
     const laporan = await createLaporan(data);
     res.status(201).json({
@@ -428,10 +493,11 @@ export const updateLaporanController = async (req, res) => {
     const { id_laporan } = req.params;
     const data = req.body;
 
-    console.log("� ========== UPDATE LAPORAN ==========");
+    console.log("🔄 ========== UPDATE LAPORAN ==========");
     console.log("🔄 Request params:", req.params);
     console.log("🔄 ID Laporan dari params:", id_laporan);
     console.log("🔄 Request body:", JSON.stringify(data, null, 2));
+    console.log("📁 File yang diunggah:", req.file ? req.file.filename : "tidak ada");
     console.log("🔄 Full URL:", req.originalUrl);
     console.log("🔄 Method:", req.method);
     console.log("🔄 =====================================");
@@ -442,6 +508,39 @@ export const updateLaporanController = async (req, res) => {
         message: "ID Laporan tidak valid atau undefined",
         receivedId: id_laporan
       });
+    }
+
+    const existingLaporan = await findLaporanById(id_laporan);
+    if (!existingLaporan) {
+      return res.status(404).json({
+        success: false,
+        message: "Laporan tidak ditemukan",
+      });
+    }
+
+    // Jika ada file yang diunggah, ganti foto lama dengan foto baru
+    if (req.file) {
+      const newFotoPath = `uploads/${req.file.filename}`;
+      data.foto_path = newFotoPath;
+      console.log("📷 Path foto yang diupdate:", data.foto_path);
+
+      if (existingLaporan.foto_path) {
+        const oldFile = getUploadFilePath(existingLaporan.foto_path);
+        await deleteLocalFile(oldFile);
+      }
+    }
+
+    if (data.nilai === "green") {
+      if (req.file) {
+        const newFile = getUploadFilePath(data.foto_path);
+        await deleteLocalFile(newFile);
+      }
+      if (existingLaporan.foto_path) {
+        const oldFile = getUploadFilePath(existingLaporan.foto_path);
+        await deleteLocalFile(oldFile);
+      }
+      data.foto_path = null;
+      console.log("🧹 Update nilai green, foto lama dihapus dan foto baru dibatalkan");
     }
 
     const laporan = await updateLaporan(id_laporan, data);

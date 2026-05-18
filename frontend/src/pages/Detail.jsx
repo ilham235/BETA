@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FiCamera, FiClipboard, FiClock, FiEdit2, FiMapPin, FiUser } from "react-icons/fi";
 import IconPenilaian from "../assets/Icon.png";
 import { useAuth } from "../context/AuthContext";
@@ -82,23 +82,20 @@ const Detail = ({ data, laporanData, onClose, onUpdateSuccess }) => {
         }
       }
 
-      // Generate foto path jika ada file baru
-      let fotoPath = laporanData.foto_path; // Gunakan existing jika tidak ada file baru
-      if (fotoBukti) {
-        const timestamp = Date.now();
-        const fileName = `laporan_${new Date().toISOString().split('T')[0]}_${user.id}_${timestamp}.jpg`;
-        fotoPath = fileName;
-      }
-
       // Siapkan data untuk update
       const updateData = {
         shift: data?.shift || data?.nama_shift || "",
         status_kehadiran: statusKehadiran,
         person_assigned: namaPetugas,
         nilai: selectedNilai,
-        foto_path: fotoPath || null,
         id_user_pengawas: user?.id,
       };
+
+      if (selectedNilai === "green") {
+        updateData.foto_path = null;
+      } else if (!fotoBukti && laporanData?.foto_path) {
+        updateData.foto_path = laporanData.foto_path;
+      }
 
       console.log("🔄 ========== PREPARE UPDATE ==========");
       console.log("📌 ID Laporan:", laporanData.id_laporan);
@@ -108,8 +105,19 @@ const Detail = ({ data, laporanData, onClose, onUpdateSuccess }) => {
       console.log("📌 URL yang akan digunakan:", urlPath);
       console.log("🔄 ====================================");
 
-      // Update laporan via PUT request
-      const response = await penugasanAPI.updateLaporan(laporanData.id_laporan, updateData);
+      let response;
+      if (fotoBukti) {
+        const formData = new FormData();
+        Object.entries(updateData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        });
+        formData.append("foto", fotoBukti);
+        response = await penugasanAPI.updateLaporan(laporanData.id_laporan, formData, true);
+      } else {
+        response = await penugasanAPI.updateLaporan(laporanData.id_laporan, updateData);
+      }
 
       if (response.data.success) {
         setSuccess(true);

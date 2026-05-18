@@ -96,18 +96,8 @@ const Penilaian = ({ data, onClose }) => {
       // Convert file ke base64 jika ada
       let fotoPath = null;
       if (fotoBukti) {
-        // Generate nama file saja, bukan menyimpan full base64
-        const timestamp = Date.now();
-        const fileName = `laporan_${new Date().toISOString().split('T')[0]}_${user.id}_${timestamp}.jpg`;
-        fotoPath = fileName;
-        
-        // TODO: Nanti gunakan ini untuk upload ke storage (Firebase, AWS S3, dll)
-        // const base64Data = await new Promise((resolve, reject) => {
-        //   const reader = new FileReader();
-        //   reader.onload = () => resolve(reader.result);
-        //   reader.onerror = reject;
-        //   reader.readAsDataURL(fotoBukti);
-        // });
+        // File akan dikirim via FormData, jadi tidak perlu konversi
+        console.log("📷 File akan dikirim: ", fotoBukti.name);
       }
 
       // Debug: cek user data
@@ -123,7 +113,6 @@ const Penilaian = ({ data, onClose }) => {
         status_kehadiran: statusKehadiran,
         person_assigned: statusKehadiran === "hadir" ? namaPetugas : namaPetugas,
         id_user_pengawas: user.id, // Pastikan user.id ada, tidak undefined
-        foto_path: fotoPath || null,
       };
 
       // Jika nilai dipilih, tambahkan ke data
@@ -131,20 +120,49 @@ const Penilaian = ({ data, onClose }) => {
         laporanData.nilai = selectedNilai;
       }
 
+      if (selectedNilai === "green" && existingLaporan?.foto_path) {
+        laporanData.foto_path = null;
+      } else if (!fotoBukti && existingLaporan?.foto_path) {
+        laporanData.foto_path = existingLaporan.foto_path;
+      }
+
       console.log("📤 Data laporan yang dikirim:", laporanData);
       console.log("📷 Foto file:", fotoBukti ? fotoBukti.name : "tidak ada");
-      console.log("💾 Foto path di DB:", fotoPath);
 
       // Tentukan apakah CREATE atau UPDATE
       let response;
       if (existingLaporan && existingLaporan.id_laporan) {
         // LAPORAN SUDAH ADA - UPDATE
         console.log("🔄 UPDATE laporan dengan ID:", existingLaporan.id_laporan);
-        response = await penugasanAPI.updateLaporan(existingLaporan.id_laporan, laporanData);
+        
+        // Gunakan FormData jika ada file, otherwise gunakan JSON
+        if (fotoBukti) {
+          const formData = new FormData();
+          Object.keys(laporanData).forEach(key => {
+            if (laporanData[key] !== undefined && laporanData[key] !== null) {
+              formData.append(key, laporanData[key]);
+            }
+          });
+          formData.append("foto", fotoBukti);
+          response = await penugasanAPI.updateLaporan(existingLaporan.id_laporan, formData, true);
+        } else {
+          response = await penugasanAPI.updateLaporan(existingLaporan.id_laporan, laporanData);
+        }
       } else {
         // LAPORAN BELUM ADA - CREATE
         console.log("✨ CREATE laporan baru");
-        response = await penugasanAPI.createLaporan(laporanData);
+        
+        // Gunakan FormData jika ada file, otherwise gunakan JSON
+        if (fotoBukti) {
+          const formData = new FormData();
+          Object.keys(laporanData).forEach(key => {
+            formData.append(key, laporanData[key]);
+          });
+          formData.append("foto", fotoBukti);
+          response = await penugasanAPI.createLaporan(formData, true);
+        } else {
+          response = await penugasanAPI.createLaporan(laporanData);
+        }
       }
 
       if (response.data.success) {
@@ -172,9 +190,13 @@ const Penilaian = ({ data, onClose }) => {
           console.warn("⚠️ Gagal mencatat aktivitas penilaian:", activityError);
         }
         
-        // Tutup modal setelah 1.5 detik
+        // Tutup modal setelah 1.5 detik; kirim laporan yang baru dibuat ke parent untuk optimistic update
         setTimeout(() => {
-          onClose();
+          try {
+            onClose(response.data.data);
+          } catch (e) {
+            onClose();
+          }
         }, 1500);
       }
     } catch (err) {

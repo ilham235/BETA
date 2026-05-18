@@ -1,15 +1,23 @@
 import cors from "cors";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import adminRoutes from "./routes/adminRoutes.js";
 import areaRoutes from "./routes/areaRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import penugasanRoutes from "./routes/penugasanRoutes.js";
 import shiftRoutes from "./routes/shiftRoutes.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadDir = path.join(__dirname, "upload");
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use("/uploads", express.static(uploadDir));
 
 // 🔍 DEBUG: Log SEMUA incoming requests
 app.use((req, res, next) => {

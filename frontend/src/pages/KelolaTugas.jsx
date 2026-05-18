@@ -6,12 +6,12 @@ import { tugasAPI } from "../service/api";
 import "./KelolaTugas.css";
 
 import {
-  FiChevronDown,
-  FiEdit2,
-  FiPlus,
-  FiSearch,
-  FiTrash2,
-  FiX,
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2,
+    FiX,
 } from "react-icons/fi";
 
 export default function KelolaTugas() {

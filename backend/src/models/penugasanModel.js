@@ -1,4 +1,27 @@
+import fs from "fs/promises";
+import path from "path";
 import pool from "../config/db.js";
+
+const getUploadFilePath = (fotoPath) => {
+  if (!fotoPath) return null;
+  const filename = path.basename(fotoPath);
+  return path.join(process.cwd(), "src", "upload", filename);
+};
+
+const deleteUploadFile = async (fotoPath) => {
+  const filePath = getUploadFilePath(fotoPath);
+  if (!filePath) return;
+
+  try {
+    await fs.access(filePath);
+    await fs.unlink(filePath);
+    console.log(`🗑️ Deleted old upload file: ${filePath}`);
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      console.warn(`⚠️ Gagal menghapus file ${filePath}:`, err.message);
+    }
+  }
+};
 
 export const findAllPenugasan = async () => {
   try {
@@ -316,6 +339,16 @@ export const findLaporanByPenugasan = async (id_penugasan, tanggal) => {
   }
 };
 
+export const findLaporanById = async (id_laporan) => {
+  try {
+    const result = await pool.query(`SELECT * FROM laporan WHERE id_laporan = $1`, [id_laporan]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error finding laporan by id:", error);
+    throw error;
+  }
+};
+
 export const createLaporan = async (data) => {
   try {
     console.log("📊 createLaporan - Data yang akan disimpan:", {
@@ -367,8 +400,23 @@ export const updateLaporan = async (id_laporan, data) => {
       person_assigned: data.person_assigned,
       nilai: data.nilai,
       catatan: data.catatan,
-      foto_path_exists: !!data.foto_path
+      foto_path_exists: data.foto_path !== undefined ? !!data.foto_path : undefined
     });
+
+    const existingResult = await pool.query(`SELECT foto_path FROM laporan WHERE id_laporan = $1`, [id_laporan]);
+    if (existingResult.rows.length === 0) {
+      throw new Error(`Laporan dengan ID ${id_laporan} tidak ditemukan`);
+    }
+    const existingLaporan = existingResult.rows[0];
+
+    if (data.foto_path !== undefined) {
+      const isRemovingPhoto = data.foto_path === null;
+      const isReplacingPhoto = data.foto_path && data.foto_path !== existingLaporan.foto_path;
+
+      if (existingLaporan.foto_path && (isRemovingPhoto || isReplacingPhoto)) {
+        await deleteUploadFile(existingLaporan.foto_path);
+      }
+    }
 
     // Build dynamic UPDATE query berdasarkan field yang ada
     const updateFields = [];
