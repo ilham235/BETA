@@ -24,6 +24,7 @@ export default function KelolaTugas() {
   const [showModal, setShowModal] = useState(false);
   const [editingTugas, setEditingTugas] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
@@ -85,9 +86,9 @@ export default function KelolaTugas() {
 
       setFormData({
         nama_tugas: item.nama_tugas,
-        deskripsi: item.deskripsi,
-        kategori: item.kategori,
-        status: item.status,
+        deskripsi: item.deskripsi ?? "",
+        kategori: item.kategori || "Pembersihan",
+        status: item.status || "aktif",
       });
     } else {
       setEditingTugas(null);
@@ -101,6 +102,7 @@ export default function KelolaTugas() {
     }
 
     setShowModal(true);
+    setFormError("");
   };
 
   const handleCloseModal = () => {
@@ -115,6 +117,19 @@ export default function KelolaTugas() {
       return;
     }
 
+    // Cek duplikat nama tugas (case-insensitive)
+    const namaBaru = formData.nama_tugas.trim().toLowerCase();
+    const duplicate = tugas.some((t) => {
+      if (editingTugas && t.id_tugas === editingTugas.id_tugas) return false; // ignore current when editing
+      return (t.nama_tugas || "").trim().toLowerCase() === namaBaru;
+    });
+
+    if (duplicate) {
+      setFormError("Tugas sudah tersedia");
+      return;
+    }
+
+    setFormError("");
     try {
       setSaving(true);
 
@@ -298,6 +313,9 @@ export default function KelolaTugas() {
                   }
                   required
                 />
+                {formError && (
+                  <div style={{ color: "#b00020", fontSize: 13, marginTop: 6 }}>{formError}</div>
+                )}
               </div>
 
               <div className="form-group">
@@ -346,7 +364,7 @@ export default function KelolaTugas() {
                   }
                 >
                   <option value="aktif">Aktif</option>
-                  <option value="nonaktif">Nonaktif</option>
+                  <option value="non-aktif">Nonaktif</option>
                 </select>
               </div>
 

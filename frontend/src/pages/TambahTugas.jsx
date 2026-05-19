@@ -309,11 +309,13 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
             {tugasError && <div style={{color: 'red', fontSize: '12px', marginBottom: '5px'}}>⚠️ {tugasError}</div>}
             <select name="tugas" value={formData.tugas} onChange={handleChange} className="custom-select" disabled={tugasList.length === 0 && !tugasError}>
               <option value="">{tugasList.length === 0 && !tugasError ? "Loading..." : "-- Pilih Tugas --"}</option>
-              {tugasList.map((tugas) => (
-                <option key={tugas.id_tugas} value={String(tugas.id_tugas)}>
-                  {tugas.nama_tugas} {tugas.status === 'non-aktif' ? '(Non-Aktif)' : ''}
-                </option>
-              ))}
+              {tugasList
+                .filter((tugas) => tugas.status !== 'non-aktif')
+                .map((tugas) => (
+                  <option key={tugas.id_tugas} value={String(tugas.id_tugas)}>
+                    {tugas.nama_tugas}
+                  </option>
+                ))}
             </select>
           </div>
 
