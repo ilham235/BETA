@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
 import { useAuth } from "../context/AuthContext";
-import { areaAPI, penugasanAPI } from "../service/api";
+import { areaAPI } from "../service/api";
 import "./KelolaArea.css";
 
 import {
-  FiChevronDown,
-  FiEdit2,
-  FiPlus,
-  FiSearch,
-  FiTrash2,
-  FiX,
+    FiChevronDown,
+    FiEdit2,
+    FiPlus,
+    FiSearch,
+    FiTrash2,
+    FiX,
 } from "react-icons/fi";
 
 export default function KelolaArea() {
@@ -38,13 +38,14 @@ export default function KelolaArea() {
   const fetchArea = async () => {
     try {
       setLoading(true);
-      const res = await penugasanAPI.getRuangan();
+      const res = await areaAPI.getAll();
 
       if (res.data.success) {
-        setAreas(res.data.data);
+        setAreas(res.data.data || []);
       }
     } catch (err) {
       console.log(err);
+      setAreas([]);
     } finally {
       setLoading(false);
     }
@@ -76,8 +77,8 @@ export default function KelolaArea() {
     if (area) {
       setEditingArea(area);
       setFormData({
-        nama: area.nama_ruangan || "",
-        lantai: area.lantai ? String(area.lantai) : "1",
+        nama: area.nama_ruangan || area.nama || "",
+        lantai: area.lantai !== undefined ? String(area.lantai) : String(area.deskripsi || "1"),
         status: area.status || "aktif"
       });
     } else {
@@ -103,28 +104,32 @@ export default function KelolaArea() {
     try {
       setSaving(true);
       if (editingArea) {
-        // Editing existing ruangan is not available in backend yet
-        alert("Edit ruangan belum didukung. Tutup dan buat ulang ruangan jika perlu.");
-      } else {
-          await penugasanAPI.createRuangan({
-          nama_ruangan: formData.nama,
+        await areaAPI.update(editingArea.id_ruangan || editingArea.id_area, {
+          nama: formData.nama,
           lantai: formData.lantai,
           status: formData.status,
         });
-        handleCloseModal();
-        fetchArea();
+      } else {
+        await areaAPI.create({
+          nama: formData.nama,
+          lantai: formData.lantai,
+          status: formData.status,
+        });
       }
+
+      handleCloseModal();
+      fetchArea();
     } catch (err) {
       console.log(err);
-      alert("Terjadi kesalahan");
+      alert("Terjadi kesalahan saat menyimpan area. Silakan coba lagi.");
     } finally {
       setSaving(false);
     }
   };
 
   const filteredArea = areas.filter((a) =>
-    (a.nama_ruangan || "").toLowerCase().includes(search.toLowerCase()) ||
-    (String(a.lantai || "")).includes(search.toLowerCase())
+    ((a.nama_ruangan || a.nama || "").toLowerCase().includes(search.toLowerCase())) ||
+    ((String(a.lantai || a.deskripsi || "")).includes(search.toLowerCase()))
   );
 
   return (
@@ -194,7 +199,7 @@ export default function KelolaArea() {
                   filteredArea.map((item) => (
                     <tr key={item.id_ruangan || item.id_area}>
                       <td>{item.nama_ruangan || item.nama}</td>
-                      <td>{item.lantai || "-"}</td>
+                      <td>{item.lantai || item.deskripsi || "-"}</td>
                       <td>
                         <span
                           className={`status ${

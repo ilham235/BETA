@@ -45,7 +45,7 @@ export default function Login() {
         localStorage.removeItem("rememberMe");
       }
       
-      // Arahkan berdasarkan role user
+      // Arahan berdasarkan role 
       if (result.user && result.user.role === "admin") {
         navigate("/admin");
       } else {

@@ -7,6 +7,7 @@ import {
     createPenugasan,
     createRuangan,
     createTugas,
+    deleteOB,
     deletePenugasan,
     deleteTugas,
     findAllAktivitas,
@@ -19,6 +20,7 @@ import {
     findLaporanByPenugasan,
     findPenugasanById,
     updateLaporan,
+    updateOB,
     updatePenugasan,
     updateTugas
 } from "../models/penugasanModel.js";
@@ -193,6 +195,7 @@ export const getOB = async (req, res) => {
 export const createNewOB = async (req, res) => {
   try {
     const data = req.body;
+    const validStatuses = ["aktif", "nonaktif"];
 
     if (!data.nama_ob) {
       return res.status(400).json({
@@ -201,11 +204,85 @@ export const createNewOB = async (req, res) => {
       });
     }
 
+    if (data.status !== undefined && !validStatuses.includes(data.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status OB harus salah satu dari: ${validStatuses.join(", ")}`
+      });
+    }
+
     const ob = await createOB(data);
     res.status(201).json({
       success: true,
       message: "OB berhasil dibuat",
       data: ob
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const updateExistingOB = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    const validStatuses = ["aktif", "nonaktif"];
+
+    if (!data.nama_ob) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama OB harus diisi"
+      });
+    }
+
+    if (data.status !== undefined && !validStatuses.includes(data.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status OB harus salah satu dari: ${validStatuses.join(", ")}`
+      });
+    }
+
+    const ob = await updateOB(id, data);
+    if (!ob) {
+      return res.status(404).json({
+        success: false,
+        message: "OB tidak ditemukan"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "OB berhasil diupdate",
+      data: ob
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const deleteExistingOB = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ob = await deleteOB(id);
+
+    if (!ob) {
+      return res.status(404).json({
+        success: false,
+        message: "OB tidak ditemukan"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "OB berhasil dihapus"
     });
   } catch (error) {
     console.error(error);

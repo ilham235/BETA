@@ -7,6 +7,7 @@ import {
     createNewPenugasan,
     createNewRuangan,
     createNewTugas,
+    deleteExistingOB,
     deleteExistingPenugasan,
     deleteExistingTugas,
     getAktivitas,
@@ -17,6 +18,7 @@ import {
     getPenugasanById,
     getRuangan,
     getTugas,
+    updateExistingOB,
     updateExistingPenugasan,
     updateExistingTugas,
     updateLaporanController
@@ -44,6 +46,8 @@ console.log("✅ Registered: GET /laporan/:id_penugasan");
 // OB ROUTES
 router.get("/ob/all", getOB);
 router.post("/ob", createNewOB);
+router.put("/ob/:id", updateExistingOB);
+router.delete("/ob/:id", deleteExistingOB);
 
 // RUANGAN ROUTES
 router.get("/ruangan/all", getRuangan);

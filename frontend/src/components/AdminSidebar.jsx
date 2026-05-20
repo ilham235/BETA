@@ -39,6 +39,11 @@ export default function AdminSidebar() {
       icon: <FiClock />,
     },
     {
+      name: "Kelola OB",
+      path: "/admin/ob",
+      icon: <FiUsers />,
+    },
+    {
       name: "Kelola User",
       path: "/admin/users",
       icon: <FiUsers />,

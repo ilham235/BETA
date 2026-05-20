@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import KelolaArea from "./pages/KelolaArea";
+import KelolaOB from "./pages/KelolaOB";
 import KelolaShift from "./pages/KelolaShift";
 import KelolaTugas from "./pages/KelolaTugas";
 import KelolaUser from "./pages/KelolaUser";
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/admin" element={<AdminRoute><DashboardAdmin /></AdminRoute>} />
       <Route path="/admin/area" element={<AdminRoute><KelolaArea /></AdminRoute>} />
       <Route path="/admin/shift" element={<AdminRoute><KelolaShift /></AdminRoute>} />
+      <Route path="/admin/ob" element={<AdminRoute><KelolaOB /></AdminRoute>} />
       <Route path="/admin/tugas" element={<AdminRoute><KelolaTugas /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><KelolaUser /></AdminRoute>} />
       <Route path="/admin/laporan" element={<AdminRoute><Laporan /></AdminRoute>} />

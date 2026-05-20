@@ -1,5 +1,12 @@
 import pool from "../config/db.js";
 
+const normalizeAreaStatus = (status) => {
+  if (typeof status !== "string") return "aktif";
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "nonaktif" || normalized === "non-aktif") return "non-aktif";
+  return normalized === "aktif" ? "aktif" : status;
+};
+
 export const findAllArea = async () => {
   try {
     const result = await pool.query("SELECT id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status FROM ruangan ORDER BY nama_ruangan");
@@ -24,7 +31,7 @@ export const createArea = async (data) => {
   try {
     const result = await pool.query(
       "INSERT INTO ruangan (nama_ruangan, lantai, status) VALUES ($1, $2, $3) RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
-      [data.nama, data.lantai || '1', data.status || "aktif"]
+      [data.nama, data.lantai || '1', normalizeAreaStatus(data.status)]
     );
     return result.rows[0];
   } catch (error) {
@@ -37,7 +44,7 @@ export const updateArea = async (id, data) => {
   try {
     const result = await pool.query(
       "UPDATE ruangan SET nama_ruangan = $1, lantai = $2, status = $3 WHERE id_ruangan = $4 RETURNING id_ruangan as id_area, nama_ruangan as nama, lantai as deskripsi, status",
-      [data.nama, data.lantai || '1', data.status, id]
+      [data.nama, data.lantai || '1', normalizeAreaStatus(data.status), id]
     );
     return result.rows[0];
   } catch (error) {

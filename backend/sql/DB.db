@@ -13,6 +13,8 @@ CREATE TABLE ob (
   id_ob SERIAL PRIMARY KEY,
   nama_ob VARCHAR(100) UNIQUE NOT NULL,
   kontak VARCHAR(20),
+  status VARCHAR(20) DEFAULT 'aktif'
+    CHECK (status IN ('aktif', 'non-aktif')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

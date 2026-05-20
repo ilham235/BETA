@@ -183,9 +183,31 @@ export const deletePenugasan = async (id) => {
 };
 
 // OB (Orang Bersih) functions
+export const ensureOBStatusColumn = async () => {
+  try {
+    await pool.query(
+      "ALTER TABLE ob ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'aktif'"
+    );
+    await pool.query(
+      "UPDATE ob SET status = 'aktif' WHERE status IS NULL"
+    );
+    await pool.query(
+      "ALTER TABLE ob DROP CONSTRAINT IF EXISTS ob_status_check"
+    );
+    await pool.query(
+      "ALTER TABLE ob ADD CONSTRAINT ob_status_check CHECK (status IN ('aktif', 'nonaktif'))"
+    );
+  } catch (error) {
+    console.error("Error ensuring ob.status column and constraint:", error);
+    throw error;
+  }
+};
+
 export const findAllOB = async () => {
   try {
-    const result = await pool.query("SELECT * FROM ob ORDER BY nama_ob");
+    const result = await pool.query(
+      "SELECT id_ob, nama_ob, kontak, COALESCE(status, 'aktif') AS status FROM ob ORDER BY nama_ob"
+    );
     return result.rows;
   } catch (error) {
     console.error("Error finding all OB:", error);
@@ -196,12 +218,38 @@ export const findAllOB = async () => {
 export const createOB = async (data) => {
   try {
     const result = await pool.query(
-      "INSERT INTO ob (nama_ob, kontak) VALUES ($1, $2) RETURNING *",
-      [data.nama_ob, data.kontak]
+      "INSERT INTO ob (nama_ob, kontak, status) VALUES ($1, $2, COALESCE($3, 'aktif')) RETURNING *",
+      [data.nama_ob, data.kontak, data.status]
     );
     return result.rows[0];
   } catch (error) {
     console.error("Error creating OB:", error);
+    throw error;
+  }
+};
+
+export const updateOB = async (id, data) => {
+  try {
+    const result = await pool.query(
+      "UPDATE ob SET nama_ob = $1, kontak = $2, status = COALESCE($3, status) WHERE id_ob = $4 RETURNING *",
+      [data.nama_ob, data.kontak, data.status, id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error updating OB:", error);
+    throw error;
+  }
+};
+
+export const deleteOB = async (id) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM ob WHERE id_ob = $1 RETURNING *",
+      [id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error deleting OB:", error);
     throw error;
   }
 };

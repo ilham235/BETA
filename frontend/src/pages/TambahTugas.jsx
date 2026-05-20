@@ -34,6 +34,12 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
   const [ruanganError, setRuanganError] = useState(null);
   const [tugasError, setTugasError] = useState(null);
 
+  const isActiveOption = (item) => {
+    if (!item || typeof item.status !== 'string') return true;
+    const normalized = item.status.trim().toLowerCase();
+    return normalized !== 'nonaktif' && normalized !== 'non-aktif';
+  };
+
   // Load OB, Ruangan, dan Tugas data dari database
   useEffect(() => {
     const loadData = async () => {
@@ -283,7 +289,7 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
             {obError && <div style={{color: 'red', fontSize: '12px', marginBottom: '5px'}}>⚠️ {obError}</div>}
             <select name="petugas" value={formData.petugas} onChange={handleChange} className="custom-select" disabled={obList.length === 0 && !obError}>
               <option value="">{obList.length === 0 && !obError ? "Loading..." : "-- Pilih Petugas --"}</option>
-              {obList.map((ob) => (
+              {obList.filter(isActiveOption).map((ob) => (
                 <option key={ob.id_ob} value={ob.nama_ob}>
                   {ob.nama_ob}
                 </option>
@@ -296,7 +302,7 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
             {ruanganError && <div style={{color: 'red', fontSize: '12px', marginBottom: '5px'}}>⚠️ {ruanganError}</div>}
             <select name="area" value={formData.area} onChange={handleChange} className="custom-select" disabled={ruanganList.length === 0 && !ruanganError}>
               <option value="">{ruanganList.length === 0 && !ruanganError ? "Loading..." : "-- Pilih Area --"}</option>
-              {ruanganList.map((ruangan) => (
+              {ruanganList.filter(isActiveOption).map((ruangan) => (
                 <option key={ruangan.id_ruangan} value={`${ruangan.nama_ruangan} - Lantai ${ruangan.lantai}`}>
                   {ruangan.nama_ruangan} (Lantai {ruangan.lantai})
                 </option>

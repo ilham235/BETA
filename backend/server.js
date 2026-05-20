@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import app from "./src/app.js";
+import { ensureOBStatusColumn } from "./src/models/penugasanModel.js";
 import { ensureUserStatusColumn } from "./src/models/userModel.js";
 
 dotenv.config();
@@ -7,6 +8,7 @@ dotenv.config();
 const startServer = async () => {
   try {
     await ensureUserStatusColumn();
+    await ensureOBStatusColumn();
     const PORT = process.env.PORT || 5000;
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

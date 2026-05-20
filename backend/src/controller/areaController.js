@@ -50,11 +50,19 @@ export const getAreaById = async (req, res) => {
 export const createNewArea = async (req, res) => {
   try {
     const data = req.body;
+    const validStatuses = ["aktif", "nonaktif", "non-aktif"];
 
     if (!data.nama) {
       return res.status(400).json({
         success: false,
         message: "Nama area harus diisi"
+      });
+    }
+
+    if (data.status !== undefined && !validStatuses.includes(String(data.status).toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Status area tidak valid"
       });
     }
 
@@ -77,6 +85,14 @@ export const updateExistingArea = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const validStatuses = ["aktif", "nonaktif", "non-aktif"];
+
+    if (data.status !== undefined && !validStatuses.includes(String(data.status).toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Status area tidak valid"
+      });
+    }
 
     const existingArea = await findAreaById(id);
     if (!existingArea) {
