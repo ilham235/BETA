@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { PieChart } from 'react-minimal-pie-chart';
 import { useNavigate } from "react-router-dom";
+import logoBeta from "../assets/beta.png";
 import iconPagi from "../assets/pagi.png";
 import poto from "../assets/poto.jpg";
 import iconSiang from "../assets/siang.png";
@@ -9,14 +10,16 @@ import Sidebar from "../components/Sidebar"; // Import Sidebar baru
 import { useAuth } from "../context/AuthContext";
 import { penugasanAPI, shiftAPI } from "../service/api";
 import "./Dashboard.css";
+import Penilaian from "./Penilaian";
 import TambahTugas from "./TambahTugas";
 
 import {
-  FiArrowUpRight, FiChevronDown,
-  FiChevronRight,
-  FiLayout,
-  FiPlus,
-  FiSearch
+    FiArrowUpRight, FiChevronDown,
+    FiChevronRight,
+    FiEdit2,
+    FiLayout,
+    FiPlus,
+    FiSearch
 } from "react-icons/fi";
 
 export default function Dashboard() {
@@ -31,6 +34,9 @@ export default function Dashboard() {
     progressPercentage: 0
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPenilaian, setShowPenilaian] = useState(false);
+  const [penilaianData, setPenilaianData] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [shiftList, setShiftList] = useState([]);
   const [shiftStatus, setShiftStatus] = useState([]);
   const [footerSubs, setFooterSubs] = useState({
@@ -41,6 +47,7 @@ export default function Dashboard() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [laporanMap, setLaporanMap] = useState({});
 
   // Cek apakah penugasan masih aktif (tanggal akhir >= hari ini)
   const isPenugasanAktif = (tanggalAkhir) => {
@@ -54,6 +61,20 @@ export default function Dashboard() {
 
   // Filter data - hanya tampilkan penugasan yang belum expired
   const activePenugasan = penugasanList.filter(item => isPenugasanAktif(item.tanggal_akhir));
+
+  const getAssignedPetugas = (item) => item.nama_ob || item.nama_lengkap || item.username || 'N/A';
+
+  const visibleTasks = activePenugasan.filter(item => {
+    if (!searchQuery) return true;
+
+    const query = searchQuery.toLowerCase();
+
+    return (
+      (item.nama_ruangan || '').toLowerCase().includes(query) ||
+      (item.detail_pekerjaan || '').toLowerCase().includes(query) ||
+      getAssignedPetugas(item).toLowerCase().includes(query)
+    );
+  });
 
   // Fetch penugasan data dan laporan untuk menghitung stats
   useEffect(() => {
@@ -121,6 +142,10 @@ export default function Dashboard() {
           const todayString = new Date().toLocaleDateString('en-CA');
           const laporanResponse = await penugasanAPI.getLaporan(todayString);
           const laporanHariIni = laporanResponse.data.data || [];
+          // build map id_penugasan -> laporan
+          const laporanMapObj = {};
+          laporanHariIni.forEach(r => { laporanMapObj[String(r.id_penugasan)] = r; });
+          setLaporanMap(laporanMapObj);
           
           console.log("Laporan hari ini:", laporanHariIni);
           
@@ -175,7 +200,7 @@ export default function Dashboard() {
 
     fetchPenugasan();
     fetchShifts();
-  }, []);
+  }, [refreshKey]);
 
   const fetchShifts = async () => {
     try {
@@ -287,17 +312,25 @@ export default function Dashboard() {
 
       <main className="main-content">
         <header className="topbar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Cari..." />
-          </div>
-          <div className="user-profile">
-            <img src={poto} alt="avatar" className="avatar" />
-            <div className="user-info">
-              <p className="user-name">{user?.nama_lengkap || user?.username || "User"}</p>
-              <p className="user-role">{user?.role || "Pengawas"}</p>
+          <div className="topbar-brand-row">
+            <img src={logoBeta} alt="BETA logo" className="topbar-logo" />
+            <div className="search-bar topbar-search">
+              <FiSearch />
+              <input
+                type="text"
+                placeholder="Cari tugas"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <FiChevronDown className="dropdown-icon" />
+            <div className="user-profile">
+              <img src={poto} alt="avatar" className="avatar" />
+              <div className="user-info">
+                <p className="user-name">{user?.nama_lengkap || user?.username || "User"}</p>
+                <p className="user-role">{user?.role || "Pengawas"}</p>
+              </div>
+              <FiChevronDown className="dropdown-icon" />
+            </div>
           </div>
         </header>
 
@@ -381,29 +414,105 @@ export default function Dashboard() {
 
           <div className="bottom-grid">
             <div className="table-container">
-              <div className="table-header">
+              <div className="table-header task-header-card">
                 <div className="header-left">
-                  <h3>Daftar Tugas</h3>
-                  <p className="table-date">{formatDate(new Date())}</p>
-                </div>
-                <div className="table-actions">
-                  <div className="small-search">
-                    <FiSearch />
-                    <input 
-                      type="text" 
-                      placeholder="Cari tugas..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                  <div className="task-header-info">
+                    <div className="task-header-title">
+                      <div>
+                        <h3>Tugas Hari Ini</h3>
+                        <p className="table-date">{formatDate(new Date())}</p>
+                      </div>
+                    </div>
                   </div>
-                  <button className="btn-monitoring" onClick={() => navigate('/pengawasan')}>
-                    <FiLayout /> Monitoring
-                  </button>
-                  <button className="btn-add" onClick={()=> setIsModalOpen(true)}><FiPlus /> Tambah Tugas</button>
+                </div>
+                <div className="header-right">
+                  <div className="header-center">
+                    <div className="search-bar table-search">
+                      <FiSearch />
+                      <input
+                        type="text"
+                        placeholder="Cari tugas, area, atau petugas"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="table-actions">
+                    <button
+                      className="btn-monitoring"
+                      onClick={() => navigate('/pengawasan')}
+                    >
+                      <span className="btn-icon btn-icon-monitoring">
+                        <FiLayout />
+                      </span>
+                      Monitoring
+                    </button>
+
+                    <button
+                      className="btn-add"
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      <span className="btn-icon btn-icon-add">
+                        <FiPlus />
+                      </span>
+                      Tambah Tugas
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <table>
+              <div className="mobile-task-list">
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>Loading data...</div>
+                ) : error ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error: {error}</div>
+                ) : visibleTasks.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>Tidak ada tugas aktif</div>
+                ) : (
+                  visibleTasks.slice(0, 5).map((item, index) => (
+                    <div className="mobile-task-card" key={index}>
+                      <div className="card-header">
+                        <div className="card-title">{item.nama_ruangan || 'N/A'}{item.lantai ? ` – ${item.lantai}` : ''}</div>
+                        {(() => {
+                          const lp = laporanMap[String(item.id_penugasan || item.id)];
+                          if (lp) {
+                            const label = lp.nilai === 'green' ? 'Selesai' : lp.nilai === 'yellow' ? 'Perlu Tindak Lanjut' : lp.nilai === 'red' ? 'Belum Selesai' : 'Dinilai';
+                            const colorClass = lp.nilai === 'green' ? 'selesai' : lp.nilai === 'yellow' ? 'peringatan' : lp.nilai === 'red' ? 'belum' : 'selesai';
+                            return (
+                              <div className={`status-badge ${colorClass}`}>
+                                <span className="status-badge-dot"></span>
+                                {label}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className={`status-badge belum`}>
+                              <span className="status-badge-dot"></span>
+                              Belum
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div className="card-detail">{item.detail_pekerjaan || 'N/A'}</div>
+                      <div className="card-meta">{getAssignedPetugas(item)} | {item.shift || 'N/A'}</div>
+                      <div className="card-action">
+                        {laporanMap[String(item.id_penugasan || item.id)] ? (
+                          <button className="btn-detail" onClick={() => {/* open detail - navigate to pengawasan detail or reuse modal */ navigate('/pengawasan'); }}>
+                            <FiChevronRight style={{ marginRight: 6 }} /> Detail
+                          </button>
+                        ) : (
+                          <button className="btn-nilai" onClick={() => { setPenilaianData(item); setShowPenilaian(true); }}>
+                            <FiEdit2 style={{ marginRight: 6 }} /> Nilai
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <table className="desktop-table">
                 <thead>
                   <tr>
                     <th>Area</th>
@@ -426,36 +535,30 @@ export default function Dashboard() {
                         Error: {error}
                       </td>
                     </tr>
-                  ) : activePenugasan.length === 0 ? (
+                  ) : visibleTasks.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
                         Tidak ada tugas aktif
                       </td>
                     </tr>
                   ) : (
-                    activePenugasan
-                      .filter(item => {
-                        if (!searchQuery) return true;
-                        const query = searchQuery.toLowerCase();
-                        return (
-                          (item.nama_ruangan || '').toLowerCase().includes(query) ||
-                          (item.detail_pekerjaan || '').toLowerCase().includes(query) ||
-                          (item.nama_lengkap || item.username || '').toLowerCase().includes(query)
-                        );
-                      })
-                      .slice(0, 5)
-                      .map((item, index) => (
+                    visibleTasks.slice(0, 5).map((item, index) => (
                       <tr key={index}>
                         <td>{item.nama_ruangan || 'N/A'} - Lantai {item.lantai || 'N/A'}</td>
                         <td>{item.detail_pekerjaan || 'N/A'}</td>
                         <td>{item.shift || 'N/A'}</td>
-                        <td>{item.nama_lengkap || item.username || 'N/A'}</td>
-                        <td><span className={`status ${getStatusClass(item.status)}`}>{item.status || 'Belum'}</span></td>
+                        <td>{getAssignedPetugas(item)}</td>
+                        <td>
+                          <span className={`status ${getStatusClass(item.status)}`}>
+                            {item.status || 'Belum'}
+                          </span>
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+
               <div className="see-more" onClick={() => navigate('/penugasan')} style={{ cursor: 'pointer' }}>
                 Lihat Selengkapnya <FiChevronRight />
               </div>
@@ -480,19 +583,23 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
-              <div className="report-card">
-                <div className="card-header">
-                  <h3>Buat <br /> Laporan</h3>
-                  <div className="icon-arrow-circle white"><FiArrowUpRight /></div>
-                </div>
-                <button className="btn-export">Ekspor Laporan</button>
-              </div>
+              
             </div>
           </div>
         </section>
       </main>
 
       <TambahTugas show={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {showPenilaian && (
+        <Penilaian
+          data={penilaianData}
+          onClose={(newReport) => {
+            setShowPenilaian(false);
+            setPenilaianData(null);
+            if (newReport) setRefreshKey(k => k + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

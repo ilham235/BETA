@@ -29,15 +29,22 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
   const [ruanganList, setRuanganList] = useState([]);
   const [tugasList, setTugasList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [dataLoadingError, setDataLoadingError] = useState(null);
   const [obError, setObError] = useState(null);
   const [ruanganError, setRuanganError] = useState(null);
   const [tugasError, setTugasError] = useState(null);
+  const [sheetHeight, setSheetHeight] = useState(50);
+  const [sheetTouchStartY, setSheetTouchStartY] = useState(null);
+  const [sheetDragStartY, setSheetDragStartY] = useState(null);
+  const [sheetDragStartHeight, setSheetDragStartHeight] = useState(50);
 
   const isActiveOption = (item) => {
     if (!item || typeof item.status !== 'string') return true;
     const normalized = item.status.trim().toLowerCase();
     return normalized !== 'nonaktif' && normalized !== 'non-aktif';
+  };
+
+  const getDefaultSheetHeight = () => {
+    return 50;
   };
 
   // Load OB, Ruangan, dan Tugas data dari database
@@ -80,10 +87,8 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
         }
         
         console.log("✅ Semua data selesai dimuat");
-        setDataLoadingError(null);
       } catch (error) {
         console.error("❌ Error loading data:", error);
-        setDataLoadingError(`Error: ${error.message}`);
       }
     };
     loadData();
@@ -91,6 +96,7 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
 
   // Logika Frontend: Pantau jika ada dataEdit yang masuk
   useEffect(() => {
+    setSheetHeight(getDefaultSheetHeight());
     if (dataEdit) {
       setFormData({
         tanggalMulai: dataEdit.tanggalMulai ? new Date(dataEdit.tanggalMulai) : new Date(),
@@ -250,9 +256,121 @@ const TambahTugas = ({ show, onClose, dataEdit, onSaveSuccess }) => {
     }
   };
 
+  const isMobileSheet = () => window.matchMedia("(max-width: 768px)").matches;
+
+  const clampSheetHeight = (height) => Math.min(100, Math.max(25, height));
+
+  const getClosestSheetLimit = (height) => {
+    const limits = [25, 50, 100];
+    return limits.reduce((closest, limit) => (
+      Math.abs(limit - height) < Math.abs(closest - height) ? limit : closest
+    ), limits[0]);
+  };
+
+  const getNextSheetLimit = () => {
+    const limits = [25, 50, 100];
+    const currentIndex = limits.findIndex((limit) => Math.abs(limit - sheetHeight) < 2);
+    return currentIndex >= 0 ? limits[(currentIndex + 1) % limits.length] : getClosestSheetLimit(sheetHeight);
+  };
+
+  const resizeSheetBeforeContentScroll = (scrollDistance, scrollTop = 0) => {
+    if (!isMobileSheet() || Math.abs(scrollDistance) < 1) return false;
+
+    const isMovingDown = scrollDistance > 0;
+    const isMovingUp = scrollDistance < 0;
+    const isAtFullHeight = sheetHeight >= 99.5;
+    const isAtSmallHeight = sheetHeight <= 25.5;
+
+    if (isMovingDown && !isAtFullHeight) {
+      setSheetHeight((currentHeight) => clampSheetHeight(currentHeight + (scrollDistance / window.innerHeight) * 100));
+      return true;
+    }
+
+    if (isMovingUp && scrollTop <= 0 && !isAtSmallHeight) {
+      setSheetHeight((currentHeight) => clampSheetHeight(currentHeight + (scrollDistance / window.innerHeight) * 100));
+      return true;
+    }
+
+    return !isAtFullHeight;
+  };
+
+  const handleSheetHandlePointerDown = (e) => {
+    if (!isMobileSheet()) return;
+    setSheetDragStartY(e.clientY);
+    setSheetDragStartHeight(sheetHeight);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handleSheetHandlePointerMove = (e) => {
+    if (sheetDragStartY === null || !isMobileSheet()) return;
+
+    const distance = sheetDragStartY - e.clientY;
+    const nextHeight = sheetDragStartHeight + (distance / window.innerHeight) * 100;
+    setSheetHeight(clampSheetHeight(nextHeight));
+  };
+
+  const handleSheetHandlePointerUp = (e) => {
+    if (sheetDragStartY === null || !isMobileSheet()) return;
+
+    const distance = sheetDragStartY - e.clientY;
+    const nextHeight = sheetDragStartHeight + (distance / window.innerHeight) * 100;
+
+    setSheetDragStartY(null);
+
+    if (Math.abs(distance) <= 8) {
+      setSheetHeight(getNextSheetLimit());
+      return;
+    }
+
+    setSheetHeight(getClosestSheetLimit(clampSheetHeight(nextHeight)));
+  };
+
+  const handleSheetWheel = (e) => {
+    if (resizeSheetBeforeContentScroll(e.deltaY, e.currentTarget.scrollTop)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSheetTouchStart = (e) => {
+    setSheetTouchStartY(e.touches[0]?.clientY ?? null);
+  };
+
+  const handleSheetTouchMove = (e) => {
+    if (sheetTouchStartY === null) return;
+
+    const currentY = e.touches[0]?.clientY ?? sheetTouchStartY;
+    const scrollDistance = sheetTouchStartY - currentY;
+
+    if (resizeSheetBeforeContentScroll(scrollDistance, e.currentTarget.scrollTop)) {
+      e.preventDefault();
+      setSheetTouchStartY(currentY);
+    }
+  };
+
+  const isSheetFullHeight = sheetHeight >= 99.5;
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay tambah-tugas-overlay" onClick={onClose}>
+      <div
+        className="modal-content tambah-tugas-sheet"
+        onClick={(e) => e.stopPropagation()}
+        onWheel={handleSheetWheel}
+        onTouchStart={handleSheetTouchStart}
+        onTouchMove={handleSheetTouchMove}
+        style={{
+          "--sheet-height": `${sheetHeight}vh`,
+          "--sheet-overflow": isSheetFullHeight ? "auto" : "hidden"
+        }}
+      >
+        <button
+          type="button"
+          className="tambah-tugas-handle"
+          aria-label="Geser form penugasan"
+          onPointerDown={handleSheetHandlePointerDown}
+          onPointerMove={handleSheetHandlePointerMove}
+          onPointerUp={handleSheetHandlePointerUp}
+          onPointerCancel={handleSheetHandlePointerUp}
+        />
         <div className="modal-header-section">
           <div className="icon-main-bg"><FiUserPlus /></div>
           <h2 className="modal-title">{dataEdit ? "Edit Penugasan" : "Input Penugasan"}</h2>

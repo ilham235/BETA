@@ -7,9 +7,11 @@ import {
     FiTrash2
 } from "react-icons/fi";
 import poto from "../assets/poto.jpg";
+import logoBeta from "../assets/beta.png";
 import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
 import Hapus from "./Delete";
+import "./Dashboard.css";
 import "./PenugasanOB.css";
 import TambahTugas from "./TambahTugas";
 
@@ -185,17 +187,24 @@ export default function PenugasanOB() {
       <Sidebar />
       <main className="main-content">
         <header className="topbar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Cari" />
-          </div>
-          <div className="user-profile">
-            <img src={poto} alt="avatar" className="avatar" />
-            <div className="user-info">
-              <p className="user-name">Wowo</p>
-              <p className="user-role">Pengawas</p>
+          <div className="topbar-brand-row">
+            <img
+              src={logoBeta}
+              alt="BETA - Bersih dan Tertata"
+              className="topbar-logo"
+            />
+            <div className="search-bar topbar-search">
+              <FiSearch />
+              <input type="text" placeholder="Cari" />
             </div>
-            <FiChevronDown />
+            <div className="user-profile">
+              <img src={poto} alt="avatar" className="avatar" />
+              <div className="user-info">
+                <p className="user-name">Wowo</p>
+                <p className="user-role">Pengawas</p>
+              </div>
+              <FiChevronDown />
+            </div>
           </div>
         </header>
 
@@ -267,6 +276,42 @@ export default function PenugasanOB() {
                 )}
               </tbody>
             </table>
+
+            <div className="penugasan-mobile-list">
+              {loading ? (
+                <div className="penugasan-state">Loading data...</div>
+              ) : error ? (
+                <div className="penugasan-state error">{error}</div>
+              ) : activePenugasan.length === 0 ? (
+                <div className="penugasan-state">
+                  Tidak ada penugasan aktif. Silakan tambah penugasan baru.
+                </div>
+              ) : (
+                activePenugasan.map((item) => (
+                  <article className="penugasan-card" key={item.id_penugasan}>
+                    <div className="penugasan-card-head">
+                      <h3>{item.area}</h3>
+                      <span className={`badge ${item.status.toLowerCase() === 'lengkap' ? 'lengkap' : 'belum'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="penugasan-card-body">
+                      <strong>{item.tugas}</strong>
+                      <p>{item.petugas} | {item.shift}</p>
+                      <p>Periode: {item.periode}</p>
+                    </div>
+                    <div className="penugasan-card-actions">
+                      <button type="button" onClick={() => handleOpenEdit(item)}>
+                        <FiEdit2 /> Edit
+                      </button>
+                      <button type="button" onClick={() => handleOpenDelete(item)}>
+                        <FiTrash2 /> Hapus
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </div>
         </section>
       </main>

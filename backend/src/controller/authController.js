@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { findUserById, findUserByUsername, getAllUsers } from "../models/userModel.js";
+import { findUserById, findUserByUsername, getAllUsers, updateUser } from "../models/userModel.js";
 
 // LOGIN
 export const login = async (req, res) => {
@@ -98,6 +98,57 @@ export const getUserInfo = async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: error.message 
+    });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Semua field password harus diisi"
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Konfirmasi password baru tidak cocok"
+      });
+    }
+
+    const user = await findUserById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User tidak ditemukan"
+      });
+    }
+
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) {
+      return res.status(401).json({
+        success: false,
+        message: "Password lama tidak sesuai"
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await updateUser(userId, { password: hashedPassword });
+
+    res.json({
+      success: true,
+      message: "Password berhasil diperbarui"
+    });
+  } catch (error) {
+    console.error("❌ CHANGE PASSWORD ERROR:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 };

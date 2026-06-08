@@ -5,10 +5,12 @@ import {
     FiSearch,
     FiStar
 } from "react-icons/fi";
+import logoBeta from "../assets/beta.png";
 import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
 import { penugasanAPI } from "../service/api";
 import Detail from "./Detail";
+import "./Dashboard.css";
 import "./Pengawasan.css";
 import Penilaian from "./penilaian";
 
@@ -140,17 +142,29 @@ export default function Pengawasan() {
 
       <main className="main-content">
         <header className="topbar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Cari" />
-          </div>
-          <div className="user-profile">
-            <img src={poto} alt="avatar" className="avatar" />
-            <div className="user-info">
-              <p className="user-name">Wowo</p>
-              <p className="user-role">Pengawas</p>
+          <div className="topbar-brand-row">
+            <img
+              src={logoBeta}
+              alt="BETA - Bersih dan Tertata"
+              className="topbar-logo"
+            />
+            <div className="search-bar topbar-search">
+              <FiSearch />
+              <input
+                type="text"
+                placeholder="Cari tugas"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <FiChevronDown className="dropdown-icon" />
+            <div className="user-profile">
+              <img src={poto} alt="avatar" className="avatar" />
+              <div className="user-info">
+                <p className="user-name">Wowo</p>
+                <p className="user-role">Pengawas</p>
+              </div>
+              <FiChevronDown className="dropdown-icon" />
+            </div>
           </div>
         </header>
 
@@ -258,6 +272,59 @@ export default function Pengawasan() {
                 )}
               </tbody>
             </table>
+
+            <div className="pengawasan-mobile-list">
+              {loading ? (
+                <div className="pengawasan-state">Loading data...</div>
+              ) : error ? (
+                <div className="pengawasan-state error">{error}</div>
+              ) : filtered.length === 0 ? (
+                <div className="pengawasan-state">Tidak ada data pengawasan</div>
+              ) : (
+                filtered.map((item) => {
+                  const laporan = laporanMap[String(item.id_penugasan)];
+                  const label =
+                    laporan?.nilai === "green" ? "Selesai" :
+                    laporan?.nilai === "yellow" ? "Perlu Tindak Lanjut" :
+                    laporan?.nilai === "red" ? "Belum Selesai" :
+                    "Belum";
+
+                  return (
+                    <article className="pengawasan-card" key={item.id_penugasan}>
+                      <div className="pengawasan-card-head">
+                        <h3>{item.area}</h3>
+                        <span className={`pengawasan-status ${laporan ? "done" : "pending"}`}>
+                          {label}
+                        </span>
+                      </div>
+
+                      <div className="pengawasan-card-body">
+                        <strong>{item.tugas}</strong>
+                        <p>{laporan?.person_assigned || item.petugas} | {item.shift}</p>
+                      </div>
+
+                      {laporan ? (
+                        <button
+                          type="button"
+                          className="pengawasan-card-action"
+                          onClick={() => setModalDetail(item)}
+                        >
+                          <FiInfo /> Detail
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="pengawasan-card-action"
+                          onClick={() => setModalNilai(item)}
+                        >
+                          <FiStar /> Nilai
+                        </button>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </div>
           </div>
         </section>
       </main>

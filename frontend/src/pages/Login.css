@@ -102,6 +102,47 @@ form input[type="password"] {
   outline: none;
   box-sizing: border-box; 
 }
+
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  padding-right: 54px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.password-toggle-btn:hover:not(:disabled),
+.password-toggle-btn:focus-visible {
+  background: #f3f4f6;
+  color: #0a8f3c;
+  outline: none;
+}
+
+.password-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 button {
   width: 100%;
   padding: 20px;

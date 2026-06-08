@@ -41,6 +41,7 @@ apiClient.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => apiClient.post("/auth/login", credentials),
   getMe: () => apiClient.get("/auth/me"),
+  changePassword: (data) => apiClient.put("/auth/password", data),
   getUsers: () => apiClient.get("/auth/users"),
 };
 

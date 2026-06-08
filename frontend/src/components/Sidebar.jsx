@@ -1,24 +1,15 @@
 import {
     FiFileText,
-    FiHelpCircle,
     FiLayout,
-    FiLogOut,
     FiSettings,
     FiUsers
 } from "react-icons/fi";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logoBeta from "../assets/beta.png";
-import { useAuth } from "../context/AuthContext";
+import "./Sidebar.css";
 
 export default function Sidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   return (
     <aside className="sidebar">
@@ -38,7 +29,7 @@ export default function Sidebar() {
         </Link>
         
         <Link to="/penugasan" className={`menu-item ${location.pathname === '/penugasan' ? 'active' : ''}`}>
-          <FiUsers /> Penugasan OB
+          <FiUsers /> Penugasan 
         </Link>
         
         <Link to="/pengawasan" className={`menu-item ${location.pathname === '/pengawasan' ? 'active' : ''}`}>
@@ -47,11 +38,9 @@ export default function Sidebar() {
 
         <p className="menu-label" style={{ marginTop: "30px" }}>UMUM</p>
         
-        <div className="menu-item"><FiSettings /> Pengaturan</div>
-        <div className="menu-item"><FiHelpCircle /> Bantuan</div>
-        <div className="menu-item logout" onClick={handleLogout}>
-          <FiLogOut /> Logout
-        </div>
+        <Link to="/setting" className={`menu-item ${location.pathname === '/setting' ? 'active' : ''}`}>
+          <FiSettings /> Pengaturan
+        </Link>
       </nav>
     </aside>
   );

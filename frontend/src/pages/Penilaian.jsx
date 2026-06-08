@@ -18,6 +18,10 @@ const Penilaian = ({ data, onClose }) => {
   const [success, setSuccess] = useState(false);
   const [existingLaporan, setExistingLaporan] = useState(null); // Track existing laporan
   const [isLoadingLaporan, setIsLoadingLaporan] = useState(true);
+  const [sheetHeight, setSheetHeight] = useState(50);
+  const [sheetTouchStartY, setSheetTouchStartY] = useState(null);
+  const [sheetDragStartY, setSheetDragStartY] = useState(null);
+  const [sheetDragStartHeight, setSheetDragStartHeight] = useState(50);
 
   // Load laporan yang sudah ada untuk penugasan ini
   useEffect(() => {
@@ -219,9 +223,120 @@ const Penilaian = ({ data, onClose }) => {
     }
   };
 
+  const isMobileSheet = () => window.matchMedia("(max-width: 768px)").matches;
+  const clampSheetHeight = (height) => Math.min(100, Math.max(25, height));
+
+  const getClosestSheetLimit = (height) => {
+    const limits = [25, 50, 100];
+    return limits.reduce((closest, limit) => (
+      Math.abs(limit - height) < Math.abs(closest - height) ? limit : closest
+    ), limits[0]);
+  };
+
+  const getNextSheetLimit = () => {
+    const limits = [25, 50, 100];
+    const currentIndex = limits.findIndex((limit) => Math.abs(limit - sheetHeight) < 2);
+    return currentIndex >= 0 ? limits[(currentIndex + 1) % limits.length] : getClosestSheetLimit(sheetHeight);
+  };
+
+  const resizeSheetBeforeContentScroll = (scrollDistance, scrollTop = 0) => {
+    if (!isMobileSheet() || Math.abs(scrollDistance) < 1) return false;
+
+    const isMovingDown = scrollDistance > 0;
+    const isMovingUp = scrollDistance < 0;
+    const isAtFullHeight = sheetHeight >= 99.5;
+    const isAtSmallHeight = sheetHeight <= 25.5;
+
+    if (isMovingDown && !isAtFullHeight) {
+      setSheetHeight((currentHeight) => clampSheetHeight(currentHeight + (scrollDistance / window.innerHeight) * 100));
+      return true;
+    }
+
+    if (isMovingUp && scrollTop <= 0 && !isAtSmallHeight) {
+      setSheetHeight((currentHeight) => clampSheetHeight(currentHeight + (scrollDistance / window.innerHeight) * 100));
+      return true;
+    }
+
+    return !isAtFullHeight;
+  };
+
+  const handleSheetHandlePointerDown = (e) => {
+    if (!isMobileSheet()) return;
+    setSheetDragStartY(e.clientY);
+    setSheetDragStartHeight(sheetHeight);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handleSheetHandlePointerMove = (e) => {
+    if (sheetDragStartY === null || !isMobileSheet()) return;
+
+    const distance = sheetDragStartY - e.clientY;
+    const nextHeight = sheetDragStartHeight + (distance / window.innerHeight) * 100;
+    setSheetHeight(clampSheetHeight(nextHeight));
+  };
+
+  const handleSheetHandlePointerUp = (e) => {
+    if (sheetDragStartY === null || !isMobileSheet()) return;
+
+    const distance = sheetDragStartY - e.clientY;
+    const nextHeight = sheetDragStartHeight + (distance / window.innerHeight) * 100;
+
+    setSheetDragStartY(null);
+
+    if (Math.abs(distance) <= 8) {
+      setSheetHeight(getNextSheetLimit());
+      return;
+    }
+
+    setSheetHeight(getClosestSheetLimit(clampSheetHeight(nextHeight)));
+  };
+
+  const handleSheetWheel = (e) => {
+    if (resizeSheetBeforeContentScroll(e.deltaY, e.currentTarget.scrollTop)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSheetTouchStart = (e) => {
+    setSheetTouchStartY(e.touches[0]?.clientY ?? null);
+  };
+
+  const handleSheetTouchMove = (e) => {
+    if (sheetTouchStartY === null) return;
+
+    const currentY = e.touches[0]?.clientY ?? sheetTouchStartY;
+    const scrollDistance = sheetTouchStartY - currentY;
+
+    if (resizeSheetBeforeContentScroll(scrollDistance, e.currentTarget.scrollTop)) {
+      e.preventDefault();
+      setSheetTouchStartY(currentY);
+    }
+  };
+
+  const isSheetFullHeight = sheetHeight >= 99.5;
+
   return (
-    <div className="modal-overlay-new" onClick={onClose}>
-      <div className="modal-container-penilaian" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay-new penilaian-overlay" onClick={onClose}>
+      <div
+        className="modal-container-penilaian penilaian-sheet"
+        onClick={(e) => e.stopPropagation()}
+        onWheel={handleSheetWheel}
+        onTouchStart={handleSheetTouchStart}
+        onTouchMove={handleSheetTouchMove}
+        style={{
+          "--sheet-height": `${sheetHeight}vh`,
+          "--sheet-overflow": isSheetFullHeight ? "auto" : "hidden"
+        }}
+      >
+        <button
+          type="button"
+          className="penilaian-sheet-handle"
+          aria-label="Geser form penilaian"
+          onPointerDown={handleSheetHandlePointerDown}
+          onPointerMove={handleSheetHandlePointerMove}
+          onPointerUp={handleSheetHandlePointerUp}
+          onPointerCancel={handleSheetHandlePointerUp}
+        />
         <div className="modal-header-penilaian">
           <div className="header-icon-box">
             {/* Menggunakan Icon.png sesuai permintaan */}

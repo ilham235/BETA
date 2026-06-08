@@ -13,6 +13,7 @@ import Laporan from "./pages/Laporan";
 import Login from "./pages/Login";
 import Pengawasan from "./pages/Pengawasan";
 import PenugasanOB from "./pages/PenugasanOB";
+import Setting from "./pages/Setting";
 
 // Component untuk redirect berdasarkan role
 function RoleBasedRedirect() {
@@ -43,6 +44,7 @@ export default function App() {
       <Route path="/admin/laporan" element={<AdminRoute><Laporan /></AdminRoute>} />
       <Route path="/penugasan" element={<ProtectedRoute><PenugasanOB /></ProtectedRoute>} />
       <Route path="/pengawasan" element={<ProtectedRoute><Pengawasan /></ProtectedRoute>} />
+      <Route path="/setting" element={<ProtectedRoute><Setting /></ProtectedRoute>} />
       <Route path="/" element={<RoleBasedRedirect />} />
       <Route path="*" element={<RoleBasedRedirect />} />
     </Routes>
