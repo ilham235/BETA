@@ -1,28 +1,29 @@
 import fs from "fs/promises";
 import path from "path";
 import {
-    createAktivitas,
-    createLaporan,
-    createOB,
-    createPenugasan,
-    createRuangan,
-    createTugas,
-    deleteOB,
-    deletePenugasan,
-    deleteTugas,
-    findAllAktivitas,
-    findAllLaporan,
-    findAllOB,
-    findAllPenugasan,
-    findAllRuangan,
-    findAllTugas,
-    findLaporanById,
-    findLaporanByPenugasan,
-    findPenugasanById,
-    updateLaporan,
-    updateOB,
-    updatePenugasan,
-    updateTugas
+  createAktivitas,
+  createLaporan,
+  createOB,
+  createPenugasan,
+  createRuangan,
+  createTugas,
+  deleteOB,
+  deletePenugasan,
+  deleteTugas,
+  findAllAktivitas,
+  findAllLaporan,
+  findAllOB,
+  findAllPenugasan,
+  findAllRuangan,
+  findAllTugas,
+  findLaporanById,
+  findLaporanByPenugasan,
+  findPenugasanById,
+  findTugasById,
+  updateLaporan,
+  updateOB,
+  updatePenugasan,
+  updateTugas
 } from "../models/penugasanModel.js";
 
 const getUploadFilePath = (fotoPath) => {
@@ -99,6 +100,20 @@ export const createNewPenugasan = async (req, res) => {
       });
     }
 
+    // Validasi id_tugas jika ada - pastikan id_tugas ada di tabel tugas
+    if (data.id_tugas) {
+      console.log(`🔍 [CREATE] Validasi id_tugas: ${data.id_tugas}`);
+      const tugasExists = await findTugasById(data.id_tugas);
+      console.log(`   Hasil validasi: ${tugasExists ? '✅ Ada' : '❌ Tidak ada'}`);
+      if (!tugasExists) {
+        console.log(`   ⚠️ Tugas dengan ID ${data.id_tugas} tidak ditemukan`);
+        return res.status(400).json({
+          success: false,
+          message: `Tugas dengan ID ${data.id_tugas} tidak ditemukan. Pilih tugas yang valid atau kosongkan field tugas.`
+        });
+      }
+    }
+
     // Generate kode pengerjaan jika tidak ada
     if (!data.kode_pengerjaan) {
       const date = new Date();
@@ -127,6 +142,17 @@ export const updateExistingPenugasan = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+
+    // Validasi id_tugas jika ada - pastikan id_tugas ada di tabel tugas
+    if (data.id_tugas) {
+      const tugasExists = await findTugasById(data.id_tugas);
+      if (!tugasExists) {
+        return res.status(400).json({
+          success: false,
+          message: `Tugas dengan ID ${data.id_tugas} tidak ditemukan. Pilih tugas yang valid atau kosongkan field tugas.`
+        });
+      }
+    }
 
     const penugasan = await updatePenugasan(id, data);
     if (!penugasan) {

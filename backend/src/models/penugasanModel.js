@@ -289,6 +289,23 @@ export const findAllTugas = async () => {
   }
 };
 
+export const findTugasById = async (id) => {
+  try {
+    console.log(`   🔎 Query database untuk tugas ID: ${id}`);
+    const result = await pool.query("SELECT * FROM tugas WHERE id_tugas = $1", [id]);
+    console.log(`   Query result: ${result.rows.length} rows found`);
+    if (result.rows.length > 0) {
+      console.log(`   ✅ Tugas ditemukan:`, result.rows[0]);
+    } else {
+      console.log(`   ❌ Tugas tidak ditemukan`);
+    }
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error finding tugas by id:", error);
+    throw error;
+  }
+};
+
 export const createTugas = async (data) => {
   try {
     const result = await pool.query(

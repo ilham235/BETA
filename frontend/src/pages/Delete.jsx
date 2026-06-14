@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 import { penugasanAPI } from "../service/api";
 import "./Delete.css";
 
 const Delete = ({ show, onClose, onConfirm, selectedTask }) => {
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -16,6 +18,29 @@ const Delete = ({ show, onClose, onConfirm, selectedTask }) => {
     try {
       setIsDeleting(true);
       await penugasanAPI.delete(selectedTask.id_penugasan);
+
+      // Catat aktivitas penghapusan penugasan
+      try {
+        const aktivitasData = {
+          id_user: user.id,
+          nama_user: user.nama_lengkap,
+          role_user: user.role,
+          tipe_aktivitas: "penugasan",
+          aksi: "Hapus penugasan",
+          nama_entitas: "Penugasan",
+          id_entitas: selectedTask.id_penugasan,
+          detail: `Menghapus penugasan untuk area ${selectedTask.area || "Tidak ditentukan"}`,
+          area_terkait: selectedTask.area,
+          status: "selesai"
+        };
+        console.log("📤 Mengirim aktivitas delete:", aktivitasData);
+        const aktivitasResponse = await penugasanAPI.createAktivitas(aktivitasData);
+        console.log("✅ Aktivitas delete berhasil dicatat:", aktivitasResponse.data);
+      } catch (activityError) {
+        console.warn("❌ Gagal mencatat aktivitas delete:", activityError);
+        // Lanjutkan meskipun pencatatan aktivitas gagal karena penugasan sudah dihapus
+      }
+
       onConfirm();
     } catch (error) {
       console.error("Error deleting penugasan:", error);

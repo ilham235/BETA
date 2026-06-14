@@ -48,6 +48,7 @@ export default function PenugasanOB() {
 
     return {
       id_penugasan: item.id_penugasan,
+      id_tugas: item.id_tugas,
       periode: `${tanggalAwal} - ${tanggalAkhir}`,
       area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
       tugas: tugas,
