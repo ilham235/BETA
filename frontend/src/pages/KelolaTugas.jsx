@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
-import { useAuth } from "../context/AuthContext";
 import { tugasAPI } from "../service/api";
 import "./KelolaTugas.css";
 
 import {
-    FiChevronDown,
     FiEdit2,
     FiPlus,
-    FiSearch,
     FiTrash2,
     FiX,
 } from "react-icons/fi";
 
 export default function KelolaTugas() {
-  const { user } = useAuth();
-
   const [tugas, setTugas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -159,31 +155,11 @@ export default function KelolaTugas() {
 
       <main className="kelola-tugas-main">
         {/* TOPBAR */}
-        <header className="topbar">
-          <div className="search-box">
-            <FiSearch />
-
-            <input
-              type="text"
-              placeholder="Cari tugas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="user-box">
-            <div className="avatar">
-              {user?.nama_lengkap?.charAt(0) || "A"}
-            </div>
-
-            <div>
-              <h4>{user?.nama_lengkap}</h4>
-              <p>Admin</p>
-            </div>
-
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari tugas..."
+        />
 
         {/* CONTENT */}
         <section className="content">

@@ -14,7 +14,7 @@ export const ensureUserStatusColumn = async () => {
 export const findUserByUsername = async (username) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM users WHERE TRIM(username) = $1",
+      "SELECT * FROM users WHERE TRIM(username) = $1 OR TRIM(email) = $1",
       [username]
     );
     return result.rows[0];
@@ -37,11 +37,11 @@ export const findUserById = async (id) => {
   }
 };
 
-export const createUser = async (username, password, nama_lengkap = null, role = "user", status = "aktif") => {
+export const createUser = async (username, password, nama_lengkap = null, role = "user", status = "aktif", email = null) => {
   try {
     const result = await pool.query(
-      "INSERT INTO users (username, password, nama_lengkap, role, status) VALUES ($1, $2, $3, $4, COALESCE($5, 'aktif')) RETURNING id_user, username, nama_lengkap, role, status",
-      [username, password, nama_lengkap, role, status]
+      "INSERT INTO users (username, password, nama_lengkap, role, status, email) VALUES ($1, $2, $3, $4, COALESCE($5, 'aktif'), $6) RETURNING id_user, username, nama_lengkap, role, status, email",
+      [username, password, nama_lengkap, role, status, email]
     );
     return result.rows[0];
   } catch (error) {
@@ -60,6 +60,10 @@ export const updateUser = async (id, data) => {
       setFields.push(`username = $${idx++}`);
       values.push(data.username);
     }
+    if (data.email !== undefined) {
+      setFields.push(`email = $${idx++}`);
+      values.push(data.email);
+    }
     if (data.password !== undefined) {
       setFields.push(`password = $${idx++}`);
       values.push(data.password);
@@ -76,6 +80,10 @@ export const updateUser = async (id, data) => {
       setFields.push(`status = $${idx++}`);
       values.push(data.status);
     }
+    if (data.foto !== undefined) {
+      setFields.push(`foto = $${idx++}`);
+      values.push(data.foto);
+    }
 
     if (setFields.length === 0) {
       return findUserById(id);
@@ -83,7 +91,7 @@ export const updateUser = async (id, data) => {
 
     values.push(id);
     const result = await pool.query(
-      `UPDATE users SET ${setFields.join(", ")} WHERE id_user = $${idx} RETURNING id_user, username, nama_lengkap, role, status`,
+      `UPDATE users SET ${setFields.join(", ")} WHERE id_user = $${idx} RETURNING id_user, username, nama_lengkap, role, status, email, foto`,
       values
     );
     return result.rows[0];
@@ -105,7 +113,7 @@ export const deleteUser = async (id) => {
 export const getAllUsers = async () => {
   try {
     const result = await pool.query(
-      "SELECT id_user, username AS email, nama_lengkap, role, COALESCE(status, 'aktif') AS status FROM users"
+      "SELECT id_user, username, email, nama_lengkap, role, COALESCE(status, 'aktif') AS status, foto FROM users"
     );
     return result.rows;
   } catch (error) {

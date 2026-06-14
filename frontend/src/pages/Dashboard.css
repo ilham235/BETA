@@ -374,18 +374,23 @@
   .table-header {
     display: grid;
     grid-template-columns: 25% auto;
-    align-items: center;
+    align-items: flex-start;
     gap: 18px;
     padding: 18px 24px;
   }
 
   .header-right {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-end;
     gap: 12px;
     min-width: 0;
     flex-wrap: nowrap;
+  }
+
+  .header-center {
+    display: flex;
+    align-items: flex-start;
   }
 
   .header-center {
@@ -534,21 +539,15 @@
 
 .header-right {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex: 1 1 75%;
-}
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: 1 1 75%;
+  }
 
-.header-center {
-  flex: 1 1 280px;
-  max-width: 340px;
-}
-
-.task-header-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  .header-center {
+    display: flex;
+    align-items: flex-start;
   min-width: 0;
 }
 

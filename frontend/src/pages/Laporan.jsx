@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
     FiBarChart2,
     FiCalendar,
-    FiChevronDown,
     FiClipboard,
     FiDownload,
     FiPieChart,
@@ -24,6 +23,7 @@ import {
     XAxis, YAxis
 } from "recharts";
 import * as XLSX from "xlsx";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
 import { penugasanAPI } from "../service/api";
 import "./Laporan.css";
@@ -515,22 +515,11 @@ export default function Laporan() {
       <AdminSidebar />
 
       <main className="laporan-main">
-        <header className="topbar">
-          <div className="search-box">
-            <FiSearch />
-            <input type="text" placeholder="Cari laporan..." />
-          </div>
-          <div className="user-box">
-            <div className="avatar">
-              {/* Avatar placeholder */}
-            </div>
-            <div>
-              <h4>Admin</h4>
-              <p>Administrator</p>
-            </div>
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari laporan..."
+        />
 
         <section className="content">
           <div className="header">

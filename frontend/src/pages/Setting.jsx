@@ -1,20 +1,18 @@
 import { useState } from "react";
 import {
-    FiChevronDown,
-    FiChevronRight,
-    FiEye,
-    FiEyeOff,
-    FiHelpCircle,
-    FiLock,
-    FiLogOut,
-    FiSearch
+  FiChevronDown,
+  FiChevronRight,
+  FiEye,
+  FiEyeOff,
+  FiHelpCircle,
+  FiLock,
+  FiLogOut
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "./Setting.css";
 
-import logoBeta from "../assets/beta.png";
-import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
+import UserTopbar from "../components/UserTopbar";
 import { useAuth } from "../context/AuthContext";
 import { authAPI } from "../service/api";
 
@@ -137,23 +135,7 @@ export default function Setting() {
     <div className="setting-layout dashboard-container">
       <Sidebar />
       <main className="main-content">
-        <header className="topbar">
-          <div className="topbar-brand-row">
-            <img src={logoBeta} alt="BETA logo" className="topbar-logo" />
-            <div className="search-bar topbar-search">
-              <FiSearch />
-              <input type="text" placeholder="Cari" />
-            </div>
-            <div className="user-profile">
-              <img src={poto} alt="user" className="avatar" />
-              <div className="user-info">
-                <p className="user-name">Wowo</p>
-                <p className="user-role">Pengawas</p>
-              </div>
-              <FiChevronDown className="dropdown-icon" />
-            </div>
-          </div>
-        </header>
+        <UserTopbar />
 
         <section className="content-inner">
 

@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
-import { useAuth } from "../context/AuthContext";
 import { adminAPI, penugasanAPI } from "../service/api";
 import "./DashboardAdmin.css";
 
 import {
     FiArrowUpRight,
     FiCheckCircle,
-    FiChevronDown,
-    FiSearch,
 } from "react-icons/fi";
 
 // Data mock untuk fallback jika API gagal
@@ -33,7 +31,6 @@ export default function DashboardAdmin() {
     totalTugas: 0,
   });
 
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -109,25 +106,7 @@ export default function DashboardAdmin() {
 
       <main className="dashboard-admin-main">
         {/* TOPBAR */}
-        <header className="dashboard-topbar">
-          <div className="dashboard-search">
-            <FiSearch />
-            <input type="text" placeholder="Cari..." />
-          </div>
-
-          <div className="dashboard-user">
-            <div className="dashboard-avatar">
-              {user?.nama_lengkap?.charAt(0) || "A"}
-            </div>
-
-            <div>
-              <h4>{user?.nama_lengkap || "Admin User"}</h4>
-              <p>Admin</p>
-            </div>
-
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar />
 
         {/* CONTENT */}
         <section className="dashboard-content">

@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import {
-    FiChevronDown,
     FiInfo,
     FiSearch,
     FiStar
 } from "react-icons/fi";
-import logoBeta from "../assets/beta.png";
-import poto from "../assets/poto.jpg";
 import Sidebar from "../components/Sidebar";
+import UserTopbar from "../components/UserTopbar";
 import { penugasanAPI } from "../service/api";
-import Detail from "./Detail";
 import "./Dashboard.css";
+import Detail from "./Detail";
 import "./Pengawasan.css";
 import Penilaian from "./penilaian";
 
@@ -141,32 +139,11 @@ export default function Pengawasan() {
       <Sidebar />
 
       <main className="main-content">
-        <header className="topbar">
-          <div className="topbar-brand-row">
-            <img
-              src={logoBeta}
-              alt="BETA - Bersih dan Tertata"
-              className="topbar-logo"
-            />
-            <div className="search-bar topbar-search">
-              <FiSearch />
-              <input
-                type="text"
-                placeholder="Cari tugas"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="user-profile">
-              <img src={poto} alt="avatar" className="avatar" />
-              <div className="user-info">
-                <p className="user-name">Wowo</p>
-                <p className="user-role">Pengawas</p>
-              </div>
-              <FiChevronDown className="dropdown-icon" />
-            </div>
-          </div>
-        </header>
+        <UserTopbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari tugas"
+        />
 
         <section className="content-inner">
           <div className="page-header">

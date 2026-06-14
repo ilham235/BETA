@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import {
-    FiChevronDown,
     FiEdit2,
     FiPlus,
-    FiSearch,
     FiTrash2
 } from "react-icons/fi";
-import poto from "../assets/poto.jpg";
-import logoBeta from "../assets/beta.png";
 import Sidebar from "../components/Sidebar";
+import UserTopbar from "../components/UserTopbar";
 import { penugasanAPI } from "../service/api";
-import Hapus from "./Delete";
 import "./Dashboard.css";
+import Hapus from "./Delete";
 import "./PenugasanOB.css";
 import TambahTugas from "./TambahTugas";
 
@@ -186,27 +183,7 @@ export default function PenugasanOB() {
     <div className="dashboard-container">
       <Sidebar />
       <main className="main-content">
-        <header className="topbar">
-          <div className="topbar-brand-row">
-            <img
-              src={logoBeta}
-              alt="BETA - Bersih dan Tertata"
-              className="topbar-logo"
-            />
-            <div className="search-bar topbar-search">
-              <FiSearch />
-              <input type="text" placeholder="Cari" />
-            </div>
-            <div className="user-profile">
-              <img src={poto} alt="avatar" className="avatar" />
-              <div className="user-info">
-                <p className="user-name">Wowo</p>
-                <p className="user-role">Pengawas</p>
-              </div>
-              <FiChevronDown />
-            </div>
-          </div>
-        </header>
+        <UserTopbar />
 
         <section className="content-inner">
           <div className="page-header">

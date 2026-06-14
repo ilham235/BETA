@@ -1,20 +1,18 @@
 import { useEffect, useState } from "react";
 import { PieChart } from 'react-minimal-pie-chart';
 import { useNavigate } from "react-router-dom";
-import logoBeta from "../assets/beta.png";
 import iconPagi from "../assets/pagi.png";
-import poto from "../assets/poto.jpg";
 import iconSiang from "../assets/siang.png";
 import iconSore from "../assets/sore.png";
 import Sidebar from "../components/Sidebar"; // Import Sidebar baru
-import { useAuth } from "../context/AuthContext";
+import UserTopbar from "../components/UserTopbar";
 import { penugasanAPI, shiftAPI } from "../service/api";
 import "./Dashboard.css";
 import Penilaian from "./Penilaian";
 import TambahTugas from "./TambahTugas";
 
 import {
-    FiArrowUpRight, FiChevronDown,
+    FiArrowUpRight,
     FiChevronRight,
     FiEdit2,
     FiLayout,
@@ -45,7 +43,6 @@ export default function Dashboard() {
     tugasSelesai: 'Dari pengawasan hari ini'
   });
 
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [laporanMap, setLaporanMap] = useState({});
 
@@ -311,28 +308,11 @@ export default function Dashboard() {
       <Sidebar />
 
       <main className="main-content">
-        <header className="topbar">
-          <div className="topbar-brand-row">
-            <img src={logoBeta} alt="BETA logo" className="topbar-logo" />
-            <div className="search-bar topbar-search">
-              <FiSearch />
-              <input
-                type="text"
-                placeholder="Cari tugas"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="user-profile">
-              <img src={poto} alt="avatar" className="avatar" />
-              <div className="user-info">
-                <p className="user-name">{user?.nama_lengkap || user?.username || "User"}</p>
-                <p className="user-role">{user?.role || "Pengawas"}</p>
-              </div>
-              <FiChevronDown className="dropdown-icon" />
-            </div>
-          </div>
-        </header>
+        <UserTopbar
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Cari tugas"
+        />
 
         <section className="content-inner">
           <div className="header-title">

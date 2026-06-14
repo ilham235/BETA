@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -41,6 +42,14 @@ apiClient.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => apiClient.post("/auth/login", credentials),
   getMe: () => apiClient.get("/auth/me"),
+  updateProfile: (data) => apiClient.put("/auth/me", data),
+  uploadPhoto: (file) => {
+    const formData = new FormData();
+    formData.append("foto", file);
+    return apiClient.post("/auth/upload-photo", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+  },
   changePassword: (data) => apiClient.put("/auth/password", data),
   getUsers: () => apiClient.get("/auth/users"),
 };

@@ -70,7 +70,7 @@ export const createUserAdmin = async (req, res) => {
 
     const username = email.trim();
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await createUser(username, hashedPassword, nama_lengkap, role || "user", status || "nonaktif");
+    const newUser = await createUser(username, hashedPassword, nama_lengkap, role || "user", status || "nonaktif", email.trim());
 
     res.status(201).json({
       success: true,
@@ -110,11 +110,14 @@ export const updateUserAdmin = async (req, res) => {
     }
 
     const updateData = {
-      username: email?.trim(),
       nama_lengkap,
       role,
       status
     };
+    if (email?.trim()) {
+      updateData.email = email.trim();
+      updateData.username = email.trim();
+    }
 
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);

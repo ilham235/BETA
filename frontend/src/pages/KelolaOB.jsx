@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
-import { useAuth } from "../context/AuthContext";
 import { penugasanAPI } from "../service/api";
 import "./KelolaOB.css";
 
 import {
-  FiChevronDown,
   FiEdit2,
   FiPlus,
-  FiSearch,
   FiTrash2,
   FiX,
 } from "react-icons/fi";
 
 export default function KelolaOB() {
-  const { user } = useAuth();
-
   const [obList, setObList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -189,31 +185,11 @@ export default function KelolaOB() {
 
       <main className="kelola-ob-main">
         {/* TOPBAR */}
-        <header className="ob-topbar">
-          <div className="ob-search">
-            <FiSearch />
-
-            <input
-              type="text"
-              placeholder="Cari petugas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="ob-user">
-            <div className="ob-avatar">
-              {user?.nama_lengkap?.charAt(0) || "A"}
-            </div>
-
-            <div>
-              <h4>{user?.nama_lengkap || "Admin User"}</h4>
-              <p>Admin</p>
-            </div>
-
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari petugas..."
+        />
 
         {/* CONTENT */}
         <section className="ob-content">

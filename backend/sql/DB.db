@@ -5,6 +5,7 @@ CREATE TABLE users (
   nama_lengkap VARCHAR(100) NOT NULL,
   role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'pengawas', 'user')),
   email VARCHAR(100),
+  foto VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

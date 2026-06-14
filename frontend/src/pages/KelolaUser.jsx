@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
-import { useAuth } from "../context/AuthContext";
 import { adminAPI } from "../service/api";
 import "./KelolaUser.css";
 
 import {
-    FiChevronDown,
     FiEdit2,
     FiPlus,
-    FiSearch,
     FiTrash2,
     FiX,
 } from "react-icons/fi";
 
 export default function KelolaUser() {
-  const { user } = useAuth();
-
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -196,28 +192,11 @@ export default function KelolaUser() {
 
       <main className="kelola-user-main">
         {/* TOPBAR */}
-        <header className="topbar">
-          <div className="search-box">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Cari user..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="user-box">
-            <div className="avatar">
-              {user?.nama_lengkap?.charAt(0) || "A"}
-            </div>
-            <div>
-              <h4>{user?.nama_lengkap}</h4>
-              <p>Admin</p>
-            </div>
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari user..."
+        />
 
         {/* CONTENT */}
         <section className="content">

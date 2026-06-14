@@ -45,6 +45,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await authAPI.updateProfile(profileData);
+      const updatedUser = response.data.user;
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return response.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Gagal menyimpan profil";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadPhoto = async (file) => {
+    try {
+      const response = await authAPI.uploadPhoto(file);
+      console.log("📸 Upload response:", response.data);
+      const updatedUser = response.data.user;
+      console.log("📸 Updated user:", updatedUser);
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return response.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Gagal upload foto";
+      console.error("❌ Upload error:", err);
+      setError(errorMessage);
+      throw err;
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -60,6 +99,8 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
+    updateProfile,
+    uploadPhoto,
     isAuthenticated: !!token,
   };
 

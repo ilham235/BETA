@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
+import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
-import { useAuth } from "../context/AuthContext";
 import { shiftAPI } from "../service/api";
 import "./KelolaShift.css";
 
 import {
-  FiChevronDown,
   FiEdit2,
   FiPlus,
-  FiSearch,
   FiTrash2,
   FiX,
 } from "react-icons/fi";
 
 export default function KelolaShift() {
-  const { user } = useAuth();
-
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -130,23 +126,7 @@ export default function KelolaShift() {
 
       <main className="kelola-shift-main">
         {/* TOPBAR */}
-        <header className="topbar">
-          <div className="search-box">
-            <FiSearch />
-            <input type="text" placeholder="Cari..." />
-          </div>
-
-          <div className="user-box">
-            <div className="avatar">
-              {user?.nama_lengkap?.charAt(0) || "A"}
-            </div>
-            <div>
-              <h4>{user?.nama_lengkap}</h4>
-              <p>Admin</p>
-            </div>
-            <FiChevronDown />
-          </div>
-        </header>
+        <AdminTopbar />
 
         {/* CONTENT */}
         <section className="content">
