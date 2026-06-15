@@ -1,29 +1,29 @@
 import fs from "fs/promises";
 import path from "path";
 import {
-  createAktivitas,
-  createLaporan,
-  createOB,
-  createPenugasan,
-  createRuangan,
-  createTugas,
-  deleteOB,
-  deletePenugasan,
-  deleteTugas,
-  findAllAktivitas,
-  findAllLaporan,
-  findAllOB,
-  findAllPenugasan,
-  findAllRuangan,
-  findAllTugas,
-  findLaporanById,
-  findLaporanByPenugasan,
-  findPenugasanById,
-  findTugasById,
-  updateLaporan,
-  updateOB,
-  updatePenugasan,
-  updateTugas
+    createAktivitas,
+    createLaporan,
+    createOB,
+    createPenugasan,
+    createRuangan,
+    createTugas,
+    deleteOB,
+    deletePenugasan,
+    deleteTugas,
+    findAllAktivitas,
+    findAllLaporan,
+    findAllOB,
+    findAllPenugasan,
+    findAllRuangan,
+    findAllTugas,
+    findLaporanById,
+    findLaporanByPenugasan,
+    findPenugasanById,
+    findTugasById,
+    updateLaporan,
+    updateOB,
+    updatePenugasan,
+    updateTugas
 } from "../models/penugasanModel.js";
 
 const getUploadFilePath = (fotoPath) => {
@@ -459,8 +459,8 @@ export const deleteExistingTugas = async (req, res) => {
 // LAPORAN CRUD
 export const getLaporan = async (req, res) => {
   try {
-    const tanggal = req.query.tanggal;
-    const laporan = await findAllLaporan(tanggal);
+    const { tanggal, tanggal_awal, tanggal_akhir } = req.query;
+    const laporan = await findAllLaporan({ tanggal, tanggal_awal, tanggal_akhir });
     res.json({
       success: true,
       data: laporan

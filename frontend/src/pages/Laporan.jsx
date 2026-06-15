@@ -23,8 +23,8 @@ import {
     XAxis, YAxis
 } from "recharts";
 import * as XLSX from "xlsx";
-import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
+import AdminTopbar from "../components/AdminTopbar";
 import { penugasanAPI } from "../service/api";
 import "./Laporan.css";
 
@@ -250,15 +250,32 @@ export default function Laporan() {
   const [filteredData, setFilteredData] = useState([]);
   const [allAreas, setAllAreas] = useState([]);
 
+  const normalizeDateToLocalString = (dateValue) => {
+    if (!dateValue) return null;
+    const date = new Date(dateValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const isDateWithinRange = (itemDate, start, end) => {
+    const itemDateString = normalizeDateToLocalString(itemDate);
+    if (!itemDateString) return false;
+    return itemDateString >= start && itemDateString <= end;
+  };
+
   // Fetch laporan data
   useEffect(() => {
     const fetchLaporanData = async () => {
       try {
         setLoading(true);
         let response;
-        if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
-            filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-          response = await penugasanAPI.getLaporan();
+        if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+          response = await penugasanAPI.getLaporan({
+            tanggal_awal: filterTanggalMulai,
+            tanggal_akhir: filterTanggalSelesai
+          });
         } else if (filterTanggalMulai && filterTanggalMulai.trim() !== "" && 
                    (!filterTanggalSelesai || filterTanggalSelesai.trim() === "")) {
           response = await penugasanAPI.getLaporan(filterTanggalMulai);
@@ -279,13 +296,14 @@ export default function Laporan() {
             month: 'short',
             year: '2-digit'
           });
+          const tugasText = item.detail_pekerjaan || item.deskripsi_penugasan || "-";
           
           return {
             id_laporan: item.id_laporan,
             tanggal: tanggalFormatted,
             tanggalRaw: new Date(item.tanggal),
             area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
-            tugas: item.detail_pekerjaan || item.deskripsi_penugasan || "-",
+            tugas: tugasText,
             petugas: item.person_assigned || item.nama_ob || "-",
             shift: item.shift || "-",
             status_kehadiran: item.status_kehadiran,
@@ -420,20 +438,16 @@ export default function Laporan() {
   const applyFilters = () => {
     let filtered = riwayatTugas;
 
-    // Filter by tanggal mulai (hanya untuk range tanggal yang valid dan berbeda)
-    if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
-        filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-      const startDate = new Date(filterTanggalMulai);
-      startDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter(item => item.tanggalRaw >= startDate);
+    // Filter by tanggal mulai dan tanggal selesai untuk jangkauan tanggal
+    if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+      filtered = filtered.filter(item => 
+        isDateWithinRange(item.tanggalRaw, filterTanggalMulai, filterTanggalSelesai)
+      );
     }
 
-    // Filter by tanggal selesai (hanya untuk range tanggal yang valid dan berbeda)
-    if (filterTanggalSelesai && filterTanggalMulai && filterTanggalMulai !== filterTanggalSelesai &&
-        filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-      const endDate = new Date(filterTanggalSelesai);
-      endDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(item => item.tanggalRaw <= endDate);
+    // Filter by area
+    if (filterArea) {
+      filtered = filtered.filter(item => item.area === filterArea);
     }
 
     // Filter by area
@@ -466,18 +480,10 @@ export default function Laporan() {
   // Hitung ulang analytics ketika filtered data berubah (termasuk search)
   useEffect(() => {
     const filtered = riwayatTugas.filter((item) => {
-      // Terapkan filter tanggal (hanya untuk range tanggal yang valid dan berbeda)
+      // Terapkan filter tanggal untuk jangkauan tanggal
       let matchesDate = true;
-      if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai !== filterTanggalSelesai && 
-          filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
-        const startDate = new Date(filterTanggalMulai);
-        matchesDate = item.tanggalRaw >= startDate;
-      }
-      if (filterTanggalSelesai && filterTanggalMulai && filterTanggalMulai !== filterTanggalSelesai && 
-          filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "" && matchesDate) {
-        const endDate = new Date(filterTanggalSelesai);
-        endDate.setHours(23, 59, 59, 999);
-        matchesDate = item.tanggalRaw <= endDate;
+      if (filterTanggalMulai && filterTanggalSelesai && filterTanggalMulai.trim() !== "" && filterTanggalSelesai.trim() !== "") {
+        matchesDate = isDateWithinRange(item.tanggalRaw, filterTanggalMulai, filterTanggalSelesai);
       }
 
       // Terapkan filter area

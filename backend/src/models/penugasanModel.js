@@ -346,8 +346,25 @@ export const deleteTugas = async (id) => {
 };
 
 // LAPORAN functions
-export const findAllLaporan = async (tanggal) => {
+export const findAllLaporan = async ({ tanggal, tanggal_awal, tanggal_akhir } = {}) => {
   try {
+    let whereClause = "";
+    const params = [];
+
+    if (tanggal) {
+      whereClause = "WHERE DATE(l.tanggal) = $1";
+      params.push(tanggal);
+    } else if (tanggal_awal && tanggal_akhir) {
+      whereClause = "WHERE DATE(l.tanggal) BETWEEN $1 AND $2";
+      params.push(tanggal_awal, tanggal_akhir);
+    } else if (tanggal_awal) {
+      whereClause = "WHERE DATE(l.tanggal) >= $1";
+      params.push(tanggal_awal);
+    } else if (tanggal_akhir) {
+      whereClause = "WHERE DATE(l.tanggal) <= $1";
+      params.push(tanggal_akhir);
+    }
+
     const query = `
       SELECT
         l.*,
@@ -362,10 +379,13 @@ export const findAllLaporan = async (tanggal) => {
       LEFT JOIN ob o ON p.id_ob = o.id_ob
       LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
       LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
-      ${tanggal ? "WHERE DATE(l.tanggal) = $1" : ""}
+      /*
+        Tugas diambil dari relasi penugasan -> tugas melalui id_penugasan.
+        Tidak perlu kolom tugas tambahan di tabel laporan.
+      */
+      ${whereClause}
       ORDER BY l.created_at DESC
     `;
-    const params = tanggal ? [tanggal] : [];
     const result = await pool.query(query, params);
     return result.rows;
   } catch (error) {

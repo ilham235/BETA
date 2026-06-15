@@ -72,9 +72,12 @@ export const penugasanAPI = {
     } : {};
     return apiClient.post("/penugasan/laporan", data, config);
   },
-  getLaporan: (tanggal) => apiClient.get("/penugasan/laporan/all", {
-    params: tanggal ? { tanggal } : {}
-  }),
+  getLaporan: (tanggalOrParams) => {
+    const params = typeof tanggalOrParams === "string"
+      ? { tanggal: tanggalOrParams }
+      : (tanggalOrParams || {});
+    return apiClient.get("/penugasan/laporan/all", { params });
+  },
   getLaporanByPenugasan: (id_penugasan, tanggal) => apiClient.get(`/penugasan/laporan/${id_penugasan}`, {
     params: tanggal ? { tanggal } : {}
   }),
