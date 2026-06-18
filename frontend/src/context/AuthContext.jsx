@@ -11,14 +11,34 @@ export const AuthProvider = ({ children }) => {
 
   // Cek token saat mount dan restore session
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
+    const restoreSession = async () => {
+      const savedToken = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
 
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+      if (savedToken) {
+        setToken(savedToken);
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+
+        try {
+          const response = await authAPI.getMe();
+          const freshUser = response.data.user;
+          setUser(freshUser);
+          localStorage.setItem("user", JSON.stringify(freshUser));
+        } catch (err) {
+          console.warn("Unable to refresh user profile:", err.response?.data || err.message);
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      }
+
+      setLoading(false);
+    };
+
+    restoreSession();
   }, []);
 
   const login = async (username, password) => {
@@ -50,7 +70,12 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await authAPI.updateProfile(profileData);
-      const updatedUser = response.data.user;
+      let updatedUser = response.data.user;
+
+      if (!updatedUser) {
+        const meResponse = await authAPI.getMe();
+        updatedUser = meResponse.data.user;
+      }
 
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));

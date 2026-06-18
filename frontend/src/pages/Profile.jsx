@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import AdminSidebar from "../components/AdminSidebar";
 import UserTopbar from "../components/UserTopbar";
+import AdminTopbar from "../components/AdminTopbar";
 import { useAuth } from "../context/AuthContext";
 import { API_ORIGIN } from "../service/api";
 import "./Dashboard.css";
@@ -99,18 +101,22 @@ export default function Profile() {
     }
   };
 
+  const isAdmin = user?.role === "admin";
+  const profileTitle = isAdmin ? "Profil Admin" : "Profil Akun";
+  const profileDescription = isAdmin ? "Informasi Akun Admin" : "Informasi Akun Supervisor";
+
   return (
     <div className="dashboard-container">
-      <Sidebar />
+      {isAdmin ? <AdminSidebar /> : <Sidebar />}
 
       <main className="main-content">
-        <UserTopbar searchDisabled />
+        {isAdmin ? <AdminTopbar searchDisabled /> : <UserTopbar searchDisabled />}
 
         <section className="content-inner">
           <div className="profile-page">
             <div className="profile-header">
-              <h1>Profil Akun</h1>
-              <p>Informasi Akun Supervisor</p>
+              <h1>{profileTitle}</h1>
+              <p>{profileDescription}</p>
             </div>
 
       <div className="profile-card">
