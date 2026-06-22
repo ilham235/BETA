@@ -3,8 +3,8 @@ import {
     FiClock,
     FiFileText,
     FiGrid,
-    FiLogOut,
     FiMapPin,
+    FiSettings,
     FiUsers,
 } from "react-icons/fi";
 
@@ -58,6 +58,11 @@ export default function AdminSidebar() {
       path: "/admin/laporan",
       icon: <FiFileText />,
     },
+    {
+      name: "Pengaturan",
+      path: "/admin/setting",
+      icon: <FiSettings />,
+    },
   ];
 
   return (
@@ -88,11 +93,6 @@ export default function AdminSidebar() {
           </Link>
         ))}
 
-        {/* Logout */}
-        <div className="menu-item logout" onClick={handleLogout}>
-          <FiLogOut />
-          Logout
-        </div>
       </nav>
     </aside>
   );

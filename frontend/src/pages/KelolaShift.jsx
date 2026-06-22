@@ -70,6 +70,28 @@ export default function KelolaShift() {
     }
   };
 
+  const getLastShift = () => {
+    if (shifts.length === 0) return null;
+    return shifts.reduce((prev, current) => {
+      const prevEnd = parseTimeToMinutes(prev.jam_selesai);
+      const currEnd = parseTimeToMinutes(current.jam_selesai);
+      return currEnd > prevEnd ? current : prev;
+    }, shifts[0]);
+  };
+
+  const handleShiftNameChange = (value) => {
+    const updatedData = { ...formData, nama_shift: value };
+
+    if (!formData.jam_mulai && shifts.length > 0) {
+      const lastShift = getLastShift();
+      if (lastShift) {
+        updatedData.jam_mulai = lastShift.jam_selesai;
+      }
+    }
+
+    setFormData(updatedData);
+  };
+
   const handleOpenModal = (shift = null) => {
     if (shift) {
       setEditingShift(shift);
@@ -80,11 +102,18 @@ export default function KelolaShift() {
       });
     } else {
       setEditingShift(null);
-      setFormData({
+      const newData = {
         nama_shift: "",
         jam_mulai: "",
         jam_selesai: "",
-      });
+      };
+
+      const lastShift = getLastShift();
+      if (lastShift) {
+        newData.jam_mulai = lastShift.jam_selesai;
+      }
+
+      setFormData(newData);
     }
 
     setShowModal(true);
@@ -94,11 +123,50 @@ export default function KelolaShift() {
     setShowModal(false);
   };
 
+  const parseTimeToMinutes = (time) => {
+    if (!time) return null;
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const isShiftOverlapping = (newShift, existingShift) => {
+    const newStart = parseTimeToMinutes(newShift.jam_mulai);
+    const newEnd = parseTimeToMinutes(newShift.jam_selesai);
+    const existingStart = parseTimeToMinutes(existingShift.jam_mulai);
+    const existingEnd = parseTimeToMinutes(existingShift.jam_selesai);
+    return newStart < existingEnd && newEnd > existingStart;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.nama_shift || !formData.jam_mulai || !formData.jam_selesai) {
       alert("Semua field wajib diisi");
+      return;
+    }
+
+    const startMinutes = parseTimeToMinutes(formData.jam_mulai);
+    const endMinutes = parseTimeToMinutes(formData.jam_selesai);
+
+    if (startMinutes === null || endMinutes === null) {
+      alert("Format jam tidak valid");
+      return;
+    }
+
+    if (startMinutes >= endMinutes) {
+      alert("Jam mulai harus lebih awal daripada jam selesai");
+      return;
+    }
+
+    const hasOverlap = shifts.some((item) => {
+      if (editingShift && item.id_shift === editingShift.id_shift) {
+        return false;
+      }
+      return isShiftOverlapping(formData, item);
+    });
+
+    if (hasOverlap) {
+      alert("Shift tersebut bertabrakan dengan shift yang sudah ada. Gunakan jam mulai setelah jam selesai shift sebelumnya.");
       return;
     }
 
@@ -203,7 +271,7 @@ export default function KelolaShift() {
                 placeholder="Nama Shift"
                 value={formData.nama_shift}
                 onChange={(e) =>
-                  setFormData({ ...formData, nama_shift: e.target.value })
+                  handleShiftNameChange(e.target.value)
                 }
               />
 

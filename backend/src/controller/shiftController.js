@@ -47,6 +47,20 @@ export const getShiftById = async (req, res) => {
   }
 };
 
+const parseTimeToMinutes = (time) => {
+  if (!time) return null;
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+const isShiftOverlapping = (newShift, existingShift) => {
+  const newStart = parseTimeToMinutes(newShift.jam_mulai);
+  const newEnd = parseTimeToMinutes(newShift.jam_selesai);
+  const existingStart = parseTimeToMinutes(existingShift.jam_mulai);
+  const existingEnd = parseTimeToMinutes(existingShift.jam_selesai);
+  return newStart < existingEnd && newEnd > existingStart;
+};
+
 export const createNewShift = async (req, res) => {
   try {
     const data = req.body;
@@ -69,6 +83,24 @@ export const createNewShift = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Jam selesai harus diisi"
+      });
+    }
+
+    const startMinutes = parseTimeToMinutes(data.jam_mulai);
+    const endMinutes = parseTimeToMinutes(data.jam_selesai);
+    if (startMinutes === null || endMinutes === null || startMinutes >= endMinutes) {
+      return res.status(400).json({
+        success: false,
+        message: "Jam mulai harus lebih awal daripada jam selesai"
+      });
+    }
+
+    const allShifts = await findAllShift();
+    const overlap = allShifts.some((shift) => isShiftOverlapping(data, shift));
+    if (overlap) {
+      return res.status(400).json({
+        success: false,
+        message: "Shift bertabrakan dengan jadwal yang sudah ada"
       });
     }
 
@@ -97,6 +129,49 @@ export const updateExistingShift = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Shift tidak ditemukan"
+      });
+    }
+
+    if (!data.nama_shift) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama shift harus diisi"
+      });
+    }
+
+    if (!data.jam_mulai) {
+      return res.status(400).json({
+        success: false,
+        message: "Jam mulai harus diisi"
+      });
+    }
+
+    if (!data.jam_selesai) {
+      return res.status(400).json({
+        success: false,
+        message: "Jam selesai harus diisi"
+      });
+    }
+
+    const startMinutes = parseTimeToMinutes(data.jam_mulai);
+    const endMinutes = parseTimeToMinutes(data.jam_selesai);
+    if (startMinutes === null || endMinutes === null || startMinutes >= endMinutes) {
+      return res.status(400).json({
+        success: false,
+        message: "Jam mulai harus lebih awal daripada jam selesai"
+      });
+    }
+
+    const allShifts = await findAllShift();
+    const overlap = allShifts.some((shift) => {
+      if (shift.id_shift === existingShift.id_shift) return false;
+      return isShiftOverlapping(data, shift);
+    });
+
+    if (overlap) {
+      return res.status(400).json({
+        success: false,
+        message: "Shift bertabrakan dengan jadwal yang sudah ada"
       });
     }
 

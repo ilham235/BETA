@@ -211,6 +211,13 @@ export const changePassword = async (req, res) => {
       });
     }
 
+    if (oldPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Sandi sedang digunakan gunakan sandi lain"
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUser(userId, { password: hashedPassword });
 

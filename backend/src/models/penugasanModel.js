@@ -203,6 +203,17 @@ export const ensureOBStatusColumn = async () => {
   }
 };
 
+export const ensureTugasDescriptionColumn = async () => {
+  try {
+    await pool.query(
+      "ALTER TABLE tugas ADD COLUMN IF NOT EXISTS deskripsi TEXT"
+    );
+  } catch (error) {
+    console.error("Error ensuring tugas.deskripsi column:", error);
+    throw error;
+  }
+};
+
 export const findAllOB = async () => {
   try {
     const result = await pool.query(
@@ -309,8 +320,8 @@ export const findTugasById = async (id) => {
 export const createTugas = async (data) => {
   try {
     const result = await pool.query(
-      "INSERT INTO tugas (nama_tugas, status) VALUES ($1, COALESCE($2, 'aktif')) RETURNING *",
-      [data.nama_tugas, data.status]
+      "INSERT INTO tugas (nama_tugas, deskripsi, status) VALUES ($1, $2, COALESCE($3, 'aktif')) RETURNING *",
+      [data.nama_tugas, data.deskripsi || null, data.status]
     );
     return result.rows[0];
   } catch (error) {
@@ -322,8 +333,8 @@ export const createTugas = async (data) => {
 export const updateTugas = async (id, data) => {
   try {
     const result = await pool.query(
-      "UPDATE tugas SET nama_tugas = COALESCE($1, nama_tugas), status = COALESCE($2, status) WHERE id_tugas = $3 RETURNING *",
-      [data.nama_tugas, data.status, id]
+      "UPDATE tugas SET nama_tugas = COALESCE($1, nama_tugas), deskripsi = COALESCE($2, deskripsi), status = COALESCE($3, status) WHERE id_tugas = $4 RETURNING *",
+      [data.nama_tugas, data.deskripsi, data.status, id]
     );
     return result.rows[0];
   } catch (error) {
