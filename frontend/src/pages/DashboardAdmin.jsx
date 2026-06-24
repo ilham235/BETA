@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminTopbar from "../components/AdminTopbar";
 import AdminSidebar from "../components/AdminSidebar";
+import AdminTopbar from "../components/AdminTopbar";
 import { adminAPI, penugasanAPI } from "../service/api";
 import "./DashboardAdmin.css";
 
@@ -119,7 +119,7 @@ export default function DashboardAdmin() {
           <div className="dashboard-cards">
             <div
               className="dashboard-card green"
-              onClick={() => navigate("/kelola-area")}
+              onClick={() => navigate("/admin/area")}
             >
               <div className="card-top">
                 <span>Total Area</span>
@@ -135,7 +135,7 @@ export default function DashboardAdmin() {
 
             <div
               className="dashboard-card white"
-              onClick={() => navigate("/kelola-user")}
+              onClick={() => navigate("/admin/users")}
             >
               <div className="card-top">
                 <span>Total User</span>
@@ -150,7 +150,7 @@ export default function DashboardAdmin() {
 
             <div
               className="dashboard-card white"
-              onClick={() => navigate("/kelola-tugas")}
+              onClick={() => navigate("/admin/tugas")}
             >
               <div className="card-top">
                 <span>Total Tugas</span>

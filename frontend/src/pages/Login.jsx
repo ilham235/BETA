@@ -121,7 +121,7 @@ export default function Login() {
         </form>
 
         <p className="forgot">
-          Lupa Password? <span>Hubungi Admin</span>
+          Lupa Password? <a href="whatsapp://send?phone=08" target="_blank" rel="noreferrer">Hubungi Admin</a>
         </p>
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import poto from "../assets/poto.jpg";
 import { useAuth } from "../context/AuthContext";
-import { API_ORIGIN } from "../service/api";
+import { getUserDisplayName, getUserPhotoUrl } from "../utils/userUtils";
 
 export default function AdminTopbar({
   searchValue,
@@ -12,8 +11,8 @@ export default function AdminTopbar({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const photoUrl = user?.foto ? `${API_ORIGIN}${user.foto}` : poto;
-  const displayName = user?.nama_lengkap || user?.username || "Admin";
+  const photoUrl = getUserPhotoUrl(user);
+  const displayName = getUserDisplayName(user, "Admin");
   const displayRole = user?.role || "Admin";
 
   return (
@@ -34,11 +33,7 @@ export default function AdminTopbar({
         onClick={() => navigate("/profile")}
         style={{ cursor: "pointer" }}
       >
-        {user?.foto ? (
-          <img src={photoUrl} alt="avatar" className="avatar" />
-        ) : (
-          <div className="avatar">{displayName.charAt(0).toUpperCase()}</div>
-        )}
+        <img src={photoUrl} alt="avatar" className="avatar" />
         <div>
           <h4>{displayName}</h4>
           <p>{displayRole}</p>

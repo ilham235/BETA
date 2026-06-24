@@ -29,6 +29,14 @@ const deleteUploadedPhoto = async (fotoPath) => {
 // LOGIN
 export const login = async (req, res) => {
   try {
+    // Validasi body ada
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({ 
+        success: false,
+        message: "Request body tidak valid. Pastikan mengirim JSON dengan Content-Type: application/json" 
+      });
+    }
+
     const username = req.body.username?.trim();
     const password = req.body.password;
 

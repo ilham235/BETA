@@ -1,9 +1,8 @@
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import logoBeta from "../assets/beta.png";
-import poto from "../assets/poto.jpg";
 import { useAuth } from "../context/AuthContext";
-import { API_ORIGIN } from "../service/api";
+import { getUserDisplayName, getUserPhotoUrl } from "../utils/userUtils";
 
 export default function UserTopbar({
   searchValue,
@@ -13,8 +12,8 @@ export default function UserTopbar({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const photoUrl = user?.foto ? `${API_ORIGIN}${user.foto}` : poto;
-  const displayName = user?.nama_lengkap || user?.username || "User";
+  const photoUrl = getUserPhotoUrl(user);
+  const displayName = getUserDisplayName(user);
   const displayRole = user?.role || "Pengawas";
 
   return (

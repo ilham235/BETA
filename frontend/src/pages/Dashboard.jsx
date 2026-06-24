@@ -455,23 +455,21 @@ export default function Dashboard() {
                         <div className="card-title">{item.nama_ruangan || 'N/A'}{item.lantai ? ` – ${item.lantai}` : ''}</div>
                         {(() => {
                           const lp = laporanMap[String(item.id_penugasan || item.id)];
-                          if (lp) {
-                            const label = lp.nilai === 'green' ? 'Selesai' : lp.nilai === 'yellow' ? 'Perlu Tindak Lanjut' : lp.nilai === 'red' ? 'Belum Selesai' : 'Dinilai';
-                            const colorClass = lp.nilai === 'green' ? 'selesai' : lp.nilai === 'yellow' ? 'peringatan' : lp.nilai === 'red' ? 'belum' : 'selesai';
+                            if (lp) {
+                              const label = lp.nilai === 'green' ? 'Selesai' : lp.nilai === 'yellow' ? 'Perlu Tindak Lanjut' : lp.nilai === 'red' ? 'Belum Selesai' : 'Dinilai';
+                              const colorClass = lp.nilai === 'green' ? 'selesai' : lp.nilai === 'yellow' ? 'peringatan' : lp.nilai === 'red' ? 'belum' : 'selesai';
+                              return (
+                                <div className={`status-badge ${colorClass}`}>
+                                  {label}
+                                </div>
+                              );
+                            }
+
                             return (
-                              <div className={`status-badge ${colorClass}`}>
-                                <span className="status-badge-dot"></span>
-                                {label}
+                              <div className={`status-badge belum`}>
+                                Belum
                               </div>
                             );
-                          }
-
-                          return (
-                            <div className={`status-badge belum`}>
-                              <span className="status-badge-dot"></span>
-                              Belum
-                            </div>
-                          );
                         })()}
                       </div>
                       <div className="card-detail">{item.detail_pekerjaan || 'N/A'}</div>
@@ -529,9 +527,26 @@ export default function Dashboard() {
                         <td>{item.shift || 'N/A'}</td>
                         <td>{getAssignedPetugas(item)}</td>
                         <td>
-                          <span className={`status ${getStatusClass(item.status)}`}>
-                            {item.status || 'Belum'}
-                          </span>
+                          {(() => {
+                            const lp = laporanMap[String(item.id_penugasan || item.id)];
+                            if (lp) {
+                              const label = lp.nilai === 'green' ? 'Selesai' : lp.nilai === 'yellow' ? 'Perlu Tindak Lanjut' : lp.nilai === 'red' ? 'Belum Selesai' : 'Dinilai';
+                              const color = lp.nilai === 'green' ? '#28a745' : lp.nilai === 'yellow' ? '#ffc107' : lp.nilai === 'red' ? '#dc3545' : '#ccc';
+                              return (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="color-box-p" style={{ backgroundColor: color }}></span>
+                                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#4a4a4a' }}>{label}</span>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="color-box-p" style={{ backgroundColor: '#d3d3d3' }}></span>
+                                <span style={{ fontSize: '13px', fontWeight: '500', color: '#999999' }}>Belum Dinilai</span>
+                              </div>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))

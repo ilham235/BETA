@@ -4,15 +4,13 @@ import AdminTopbar from "../components/AdminTopbar";
 import Sidebar from "../components/Sidebar";
 import UserTopbar from "../components/UserTopbar";
 import { useAuth } from "../context/AuthContext";
-import { API_ORIGIN } from "../service/api";
+import { getUserDisplayName, getUserProfilePhotoUrl } from "../utils/userUtils";
 import "./Dashboard.css";
 import "./Profile.css";
 
 import {
     FiEdit2,
 } from "react-icons/fi";
-
-import poto from "../assets/poto.jpg";
 
 export default function Profile() {
   const { user, updateProfile, uploadPhoto } = useAuth();
@@ -21,16 +19,37 @@ export default function Profile() {
   const [notification, setNotification] = useState(null);
   const [cacheKey, setCacheKey] = useState(0);
   const fileInputRef = useRef(null);
-  const profilePhotoUrl = user?.foto ? `${API_ORIGIN}${user.foto}?t=${cacheKey}` : poto;
+  const profilePhotoUrl = getUserProfilePhotoUrl(user, cacheKey);
 
   const notify = (message, type = "success") => {
     setNotification({ message, type });
     window.setTimeout(() => setNotification(null), 3000);
   };
 
+  const validateEmail = (email) => {
+    if (!email) return false;
+    const parts = email.split("@");
+    if (parts.length !== 2) return false;
+
+    const [localPart, domainPart] = parts;
+    if (!localPart || !domainPart) return false;
+
+    const domainLabels = domainPart.split(".");
+    if (domainLabels.length < 2) return false;
+
+    const validDomainLabel = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+    if (!domainLabels.every((label) => validDomainLabel.test(label))) return false;
+
+    const topLevelDomain = domainLabels[domainLabels.length - 1].toLowerCase();
+    if (!["com", "id"].includes(topLevelDomain)) return false;
+
+    const localPattern = /^[^\s@]+$/;
+    return localPattern.test(localPart);
+  };
+
   const [formData, setFormData] = useState({
-    username: user?.username || "wowo123",
-    fullName: user?.nama_lengkap || "Wowo BETA",
+    username: user?.username || "user",
+    fullName: getUserDisplayName(user),
     email: user?.email || user?.username || "supervisor@beta.com"
   });
 
@@ -39,7 +58,7 @@ export default function Profile() {
 
     setFormData((prev) => ({
       username: user.username || prev.username,
-      fullName: user.nama_lengkap || prev.fullName,
+      fullName: getUserDisplayName(user),
       email: user.email || user.username || prev.email
     }));
   }, [user]);
@@ -82,6 +101,11 @@ export default function Profile() {
 
   const handleEdit = async () => {
     if (isEditing) {
+      if (!validateEmail(formData.email)) {
+        notify("Email harus berupa alamat email yang valid", "error");
+        return;
+      }
+
       setIsSaving(true);
       try {
         await updateProfile({

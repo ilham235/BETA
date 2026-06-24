@@ -97,6 +97,12 @@ const Penilaian = ({ data, onClose }) => {
         return;
       }
 
+      // Validasi nilai wajib diisi
+      if (!selectedNilai) {
+        setError("Harap isikan nilai");
+        return;
+      }
+
       // Convert file ke base64 jika ada
       let fotoPath = null;
       if (fotoBukti) {
