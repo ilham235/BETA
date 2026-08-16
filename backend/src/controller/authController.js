@@ -29,7 +29,7 @@ const deleteUploadedPhoto = async (fotoPath) => {
 // LOGIN
 export const login = async (req, res) => {
   try {
-    // Validasi body ada
+    // Validasi body 
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({ 
         success: false,

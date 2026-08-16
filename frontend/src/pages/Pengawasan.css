@@ -428,15 +428,18 @@
     margin: 4px 0 0;
   }
 
-  .table-card {
+  .pengawasan-page .table-card,
+  .pengawasan-content .table-card {
     background: transparent;
     padding: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .table-header,
-  .custom-table {
+  .pengawasan-page .table-header,
+  .pengawasan-page .custom-table,
+  .pengawasan-content .table-header,
+  .pengawasan-content .custom-table {
     display: none;
   }
 

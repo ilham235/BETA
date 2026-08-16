@@ -12,7 +12,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoBeta from "../assets/beta.png";
 import { useAuth } from "../context/AuthContext";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ className = "" }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -66,7 +66,7 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar admin-sidebar ${className}`.trim()}>
       {/* LOGO */}
       <div className="logo-section">
         <img

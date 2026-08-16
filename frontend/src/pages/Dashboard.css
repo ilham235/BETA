@@ -589,12 +589,12 @@
   flex-shrink: 0;
 }
 
-/* Search Bar Kecil di Tabel */
-.small-search {
+/* Search Bar Kecil di Tabel Dashboard */
+.dashboard-container .small-search {
   display: none !important;
 }
 
-.small-search input {
+.dashboard-container .small-search input {
   background: transparent;
   border: none;
   outline: none;

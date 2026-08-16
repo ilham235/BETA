@@ -1,9 +1,10 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useEffect, useState } from "react";
 import {
     FiBarChart2,
     FiCalendar,
     FiClipboard,
-    FiDownload,
     FiPieChart,
     FiPrinter,
     FiSearch,
@@ -22,200 +23,117 @@ import {
     Tooltip,
     XAxis, YAxis
 } from "recharts";
-import * as XLSX from "xlsx";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminTopbar from "../components/AdminTopbar";
-import { penugasanAPI } from "../service/api";
+import { areaAPI, penugasanAPI } from "../service/api";
 import "./Laporan.css";
 
-// Fungsi untuk export ke format Excel (XLSX) dengan border dan auto width
-const exportToExcel = (data, trendData = [], performaArea = [], distribusiData = [], ringkasanData = {}, format = 'xlsx', fileName = 'laporan_kebersihan') => {
-  if (!data || data.length === 0) {
-    alert("Tidak ada data untuk diekspor");
-    return;
+// Map numeric/keyword nilai to human-readable label
+const getKeteranganNilai = (nilai) => {
+  if (!nilai) return "-";
+  switch (nilai) {
+    case "green":
+    case "hijau":
+      return "Sangat Bersih";
+    case "yellow":
+    case "kuning":
+      return "Cukup Bersih";
+    case "red":
+    case "merah":
+      return "Kurang Bersih";
+    default:
+      return String(nilai);
   }
+};
 
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-
-  if (format === 'xlsx') {
-    const wb = XLSX.utils.book_new();
-
-    // ==================== SHEET 1: DATA LAPORAN ====================
-    const headers = ["Tanggal", "Area", "Tugas", "Petugas", "Shift", "Status"];
-    const wsData = [headers];
-    
-    data.forEach(item => {
-      const row = [
-        item.tanggal || "",
-        item.area || "",
-        item.tugas || "",
-        item.petugas || "",
-        item.shift || "",
-        item.status || ""
-      ];
-      wsData.push(row);
-    });
-    
-    const wsLaporan = XLSX.utils.aoa_to_sheet(wsData);
-    
-    // Auto width - hitung lebar kolom berdasarkan konten
-    const colWidths = headers.map((h, i) => {
-      let maxLen = h.length;
-      data.forEach(item => {
-        const rowData = [item.tanggal || "", item.area || "", item.tugas || "", item.petugas || "", item.shift || "", item.status || ""];
-        const len = String(rowData[i]).length;
-        if (len > maxLen) maxLen = Math.min(len, 80);
-      });
-      return { wch: maxLen + 3 };
-    });
-    wsLaporan['!cols'] = colWidths;
-    
-    XLSX.utils.book_append_sheet(wb, wsLaporan, "Data Laporan");
-
-    // ==================== SHEET 2: TREND TUGAS HARIAN ====================
-    if (trendData.length > 0) {
-      const trendHeaders = ["Tanggal", "Selesai", "Total"];
-      const trendWsData = [trendHeaders];
-      
-      trendData.forEach(item => {
-        trendWsData.push([item.hari || item.Tanggal || "", item.Selesai || 0, item.Total || 0]);
-      });
-      
-      const wsTrend = XLSX.utils.aoa_to_sheet(trendWsData);
-      
-      // Auto width untuk trend
-      const trendColWidths = trendHeaders.map((h, i) => {
-        let maxLen = h.length;
-        trendData.forEach(item => {
-          const values = [item.hari || item.Tanggal || "", item.Selesai || 0, item.Total || 0];
-          const len = String(values[i]).length;
-          if (len > maxLen) maxLen = Math.min(len, 30);
-        });
-        return { wch: maxLen + 3 };
-      });
-      wsTrend['!cols'] = trendColWidths;
-      
-      XLSX.utils.book_append_sheet(wb, wsTrend, "Trend Tugas Harian");
-    }
-
-    // ==================== SHEET 3: PERFORMA PER AREA ====================
-    if (performaArea.length > 0) {
-      const areaHeaders = ["Area", "Selesai", "Total", "Persentase"];
-      const areaWsData = [areaHeaders];
-      
-      performaArea.forEach(item => {
-        const persentase = item.Total > 0 ? Math.round((item.Selesai / item.Total) * 100) : 0;
-        areaWsData.push([item.area || "", item.Selesai || 0, item.Total || 0, `${persentase}%`]);
-      });
-      
-      const wsArea = XLSX.utils.aoa_to_sheet(areaWsData);
-      
-      // Auto width untuk area
-      const areaColWidths = areaHeaders.map((h, i) => {
-        let maxLen = h.length;
-        performaArea.forEach(item => {
-          const persentase = item.Total > 0 ? Math.round((item.Selesai / item.Total) * 100) : 0;
-          const values = [item.area || "", item.Selesai || 0, item.Total || 0, `${persentase}%`];
-          const len = String(values[i]).length;
-          if (len > maxLen) maxLen = Math.min(len, 40);
-        });
-        return { wch: maxLen + 3 };
-      });
-      wsArea['!cols'] = areaColWidths;
-      
-      XLSX.utils.book_append_sheet(wb, wsArea, "Performa Per Area");
-    }
-
-    // ==================== SHEET 4: DISTRIBUSI PENYELESAIAN ====================
-    if (distribusiData.length > 0) {
-      const distHeaders = ["Status", "Jumlah"];
-      const distWsData = [distHeaders];
-      
-      distribusiData.forEach(item => {
-        distWsData.push([item.name || "", item.value || 0]);
-      });
-      
-      // Tambahkan total
-      const total = distribusiData.reduce((sum, item) => sum + (item.value || 0), 0);
-      distWsData.push(["TOTAL", total]);
-      
-      const wsDist = XLSX.utils.aoa_to_sheet(distWsData);
-      
-      // Auto width untuk distribusi
-      const distColWidths = distHeaders.map((h, i) => {
-        let maxLen = h.length;
-        distribusiData.forEach(item => {
-          const values = [item.name || "", item.value || 0];
-          const len = String(values[i]).length;
-          if (len > maxLen) maxLen = Math.min(len, 20);
-        });
-        maxLen = Math.max(maxLen, 10); // Min width untuk "TOTAL"
-        return { wch: maxLen + 3 };
-      });
-      distColWidths.push({ wch: 15 }); // Kolom untuk total
-      wsDist['!cols'] = distColWidths;
-      
-      XLSX.utils.book_append_sheet(wb, wsDist, "Distribusi Penyelesaian");
-    }
-
-    // ==================== SHEET 5: RINGKASAN ====================
-    const ringkasanHeaders = ["Metrik", "Nilai"];
-    const ringkasanWsData = [
-      ringkasanHeaders,
-      ["Periode", ringkasanData.periode || "-"],
-      ["Total Selesai", ringkasanData.totalSelesai || 0],
-      ["Total Belum Selesai", ringkasanData.totalBelum || 0],
-      ["Rata-rata Harian", ringkasanData.rataRataHarian || 0]
-    ];
-    
-    const wsRingkasan = XLSX.utils.aoa_to_sheet(ringkasanWsData);
-    
-    // Auto width untuk ringkasan
-    wsRingkasan['!cols'] = [{ wch: 25 }, { wch: 20 }];
-    
-    XLSX.utils.book_append_sheet(wb, wsRingkasan, "Ringkasan");
-    
-    // Generate dan download file XLSX
-    XLSX.writeFile(wb, `${fileName}_${dateStr}.xlsx`);
-    
-  } else {
-    // Export ke format CSV
-    const headers = ["Tanggal", "Area", "Tugas", "Petugas", "Shift", "Status"];
-    const csvContent = [];
-    
-    csvContent.push(headers.join(","));
-    
-    data.forEach(item => {
-      const row = [
-        item.tanggal || "",
-        item.area || "",
-        item.tugas || "",
-        item.petugas || "",
-        item.shift || "",
-        item.status || ""
-      ];
-      const escapedRow = row.map(field => {
-        const value = String(field);
-        if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      });
-      csvContent.push(escapedRow.join(","));
-    });
-    
-    const csvString = csvContent.join("\n");
-    const blob = new Blob(["\ufeff" + csvString], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${fileName}_${dateStr}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+// Map nilai to CSS class for badge
+const getKeteranganClass = (nilai) => {
+  if (!nilai) return "belum";
+  switch (nilai) {
+    case "green":
+    case "hijau":
+      return "selesai";
+    case "yellow":
+    case "kuning":
+      return "warning";
+    case "red":
+    case "merah":
+      return "belum";
+    default:
+      return "belum";
   }
+};
+
+// Generate A4 PDF from the displayed table data only
+const generatePDF = (data = []) => {
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
+  const startY = 20;
+
+  doc.setFontSize(16);
+  doc.text('Form Penilaian BETA', pageWidth / 2, startY, { align: 'center' });
+
+  const head = [["Tanggal", "Area", "Tugas", "Petugas", "Keterangan"]];
+  const body = data.map(item => [
+    item.tanggal || '-',
+    item.area || '-',
+    item.tugas || '-',
+    item.petugas || '-',
+    // if status text is stored under 'status' or fallback to keterangan
+    (item.status || item.keterangan || '-')
+  ]);
+
+  // Dynamic column widths based on content length
+  const availableWidth = pageWidth - margin * 2;
+  const colsCount = head[0].length;
+  const allRows = [head[0], ...body];
+  const maxLens = Array(colsCount).fill(1);
+  allRows.forEach(row => {
+    row.forEach((cell, idx) => {
+      const len = String(cell || '').length;
+      if (len > maxLens[idx]) maxLens[idx] = len;
+    });
+  });
+  const totalLen = maxLens.reduce((s, v) => s + v, 0) || colsCount;
+  const minWidths = [25, 40, 60, 40, 30];
+  const colWidths = maxLens.map((l, i) => Math.max(minWidths[i] || 20, Math.round((l / totalLen) * availableWidth)));
+  let sumWidths = colWidths.reduce((s, v) => s + v, 0);
+  if (sumWidths > availableWidth) {
+    const scale = availableWidth / sumWidths;
+    for (let i = 0; i < colWidths.length; i++) colWidths[i] = Math.floor(colWidths[i] * scale);
+    sumWidths = colWidths.reduce((s, v) => s + v, 0);
+    let rem = availableWidth - sumWidths;
+    let idx = 0;
+    while (rem > 0) {
+      colWidths[idx % colWidths.length] += 1;
+      rem--;
+      idx++;
+    }
+  }
+  const columnStyles = {};
+  colWidths.forEach((w, i) => { columnStyles[i] = { cellWidth: w }; });
+
+  autoTable(doc, {
+    head,
+    body,
+    startY: startY + 8,
+    margin: { left: margin, right: margin },
+    styles: { fontSize: 10, cellPadding: 3, overflow: 'linebreak' },
+    headStyles: { fillColor: [240,240,240], textColor: 20 },
+    theme: 'grid',
+    columnStyles
+  });
+
+  const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 250;
+  // Signature block aligned to right
+  const sigX = pageWidth - margin - 60;
+  doc.setFontSize(11);
+  doc.text('Mengetahui,', sigX, finalY);
+  doc.text('( ________________________ )', sigX, finalY + 25);
+
+  const fileName = `laporan_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
 };
 
 export default function Laporan() {
@@ -265,6 +183,29 @@ export default function Laporan() {
     return itemDateString >= start && itemDateString <= end;
   };
 
+  // Fetch list area dari database saat component mount
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const response = await areaAPI.getAll();
+        if (response.data.success && response.data.data) {
+          // Convert area data ke format yang sesuai untuk dropdown
+          const areaList = response.data.data.map(area => {
+            // Sesuaikan dengan format yang digunakan di laporan (nama_ruangan - Lantai)
+            const lantai = area.lantai || area.lantai_id || "1";
+            return `${area.nama_ruangan || area.nama} - Lantai ${lantai}`;
+          });
+          setAllAreas(areaList);
+        }
+      } catch (err) {
+        console.error("Error fetching areas:", err);
+        // Tetap lanjut meskipun fetch area gagal, akan diisi dari laporan data
+      }
+    };
+
+    fetchAreas();
+  }, []); // Run once on mount
+
   // Fetch laporan data
   useEffect(() => {
     const fetchLaporanData = async () => {
@@ -304,11 +245,12 @@ export default function Laporan() {
             tanggalRaw: new Date(item.tanggal),
             area: item.nama_ruangan ? `${item.nama_ruangan} - Lantai ${item.lantai}` : "-",
             tugas: tugasText,
-            petugas: item.person_assigned || item.nama_ob || "-",
-            shift: item.shift || "-",
+            // Prefer OB name from laporan (nama_ob) as Petugas; fallback to person_assigned
+            petugas: item.nama_ob || item.person_assigned || "-",
             status_kehadiran: item.status_kehadiran,
             nilai: item.nilai,
-            status: item.status_kehadiran === "hadir" ? "Hadir" : "Tidak Hadir"
+            // Use `status` from DB when available; fallback to attendance-based label
+            status: item.status || (item.status_kehadiran === "hadir" ? "Hadir" : "Tidak Hadir")
           };
         });
 
@@ -365,8 +307,10 @@ export default function Laporan() {
           rataRataHarian: avgHarian
         });
 
-        const uniqueAreas = [...new Set(transformedData.map(item => item.area).filter(a => a !== "-"))];
-        setAllAreas(uniqueAreas);
+        // Gabungkan area dari API dengan area yang ada di laporan data
+        const uniqueLaporanAreas = [...new Set(transformedData.map(item => item.area).filter(a => a !== "-"))];
+        const combinedAreas = [...new Set([...allAreas, ...uniqueLaporanAreas])].sort();
+        setAllAreas(combinedAreas);
 
         setError(null);
       } catch (err) {
@@ -533,12 +477,15 @@ export default function Laporan() {
               <h1>Laporan Kebersihan</h1>
               <p>Monitor dan analisis performa tugas kebersihan</p>
             </div>
-            <div className="laporan-actions">
-              <button className="btn-cetak"><FiPrinter /> Cetak PDF</button>
-              <button className="btn-unduh" onClick={() => exportToExcel(filteredData, trendData, performaArea, distribusiData, ringkasanData, 'xlsx', 'laporan_kebersihan')}>
-                <FiDownload /> Unduh Excel
-              </button>
-            </div>
+
+            <button
+              type="button"
+              className="btn-cetak"
+              onClick={() => generatePDF(filteredData)}
+              title="Export Laporan ke PDF"
+            >
+              <FiPrinter /> Cetak PDF
+            </button>
           </div>
 
           <div className="filter-card">
@@ -550,45 +497,26 @@ export default function Laporan() {
                 <label>Tanggal Mulai</label>
                 <input
                   type="date"
+                  className="filter-date-input"
                   value={filterTanggalMulai}
                   onChange={(e) => setFilterTanggalMulai(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    fontSize: "14px"
-                  }}
                 />
               </div>
               <div className="filter-item">
                 <label>Tanggal Selesai</label>
                 <input
                   type="date"
+                  className="filter-date-input"
                   value={filterTanggalSelesai}
                   onChange={(e) => setFilterTanggalSelesai(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    fontSize: "14px"
-                  }}
                 />
               </div>
               <div className="filter-item">
                 <label>Filter Area</label>
                 <select
+                  className="filter-select-input"
                   value={filterArea}
                   onChange={(e) => setFilterArea(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    fontSize: "14px",
-                    cursor: "pointer"
-                  }}
                 >
                   <option value="">Semua Area</option>
                   {allAreas.map((area, idx) => (
@@ -601,10 +529,10 @@ export default function Laporan() {
             </div>
           </div>
 
-          <div className="table-card">
-            <div className="table-header">
+          <div className="laporan-table-card table-card">
+            <div className="laporan-table-header table-header">
               <h3>Riwayat Tugas</h3>
-              <div className="small-search">
+              <div className="laporan-table-search small-search">
                 <FiSearch />
                 <input
                   type="text"
@@ -614,15 +542,14 @@ export default function Laporan() {
                 />
               </div>
             </div>
-            <div className="table-scroll-container">
-              <table className="custom-table">
+            <div className="laporan-table-scroll table-scroll-container">
+              <table className="laporan-table custom-table">
                 <thead>
                   <tr>
                     <th>Tanggal</th>
                     <th>Area</th>
                     <th>Tugas</th>
                     <th>Petugas</th>
-                    <th>Shift</th>
                     <th>Keterangan</th>
                   </tr>
                 </thead>
@@ -646,9 +573,8 @@ export default function Laporan() {
                         <td>{item.area}</td>
                         <td>{item.tugas}</td>
                         <td>{item.petugas}</td>
-                        <td>{item.shift}</td>
                         <td>
-                          <span className={`status-badge ${item.status_kehadiran === "hadir" ? "selesai" : "belum"}`}>
+                          <span className={`status-badge ${item.nilai ? getKeteranganClass(item.nilai) : (item.status_kehadiran === "hadir" ? "selesai" : "belum")}`}>
                             {item.status}
                           </span>
                         </td>

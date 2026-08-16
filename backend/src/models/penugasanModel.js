@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import pool from "../config/db.js";
+import { formatLaporanListWithSnapshot, formatLaporanWithSnapshot } from "../utils/laporanFormatter.js";
 
 const getUploadFilePath = (fotoPath) => {
   if (!fotoPath) return null;
@@ -23,6 +24,37 @@ const deleteUploadFile = async (fotoPath) => {
   }
 };
 
+const normalizeShiftValue = (shiftValue) => {
+  if (shiftValue === null || shiftValue === undefined || shiftValue === "") {
+    return null;
+  }
+
+  const rawValue = String(shiftValue).trim();
+  const normalizedValue = rawValue.toLowerCase();
+  const shiftNameMap = {
+    "1": "Pagi",
+    "2": "Siang",
+    "3": "Sore",
+    "pagi": "Pagi",
+    "siang": "Siang",
+    "sore": "Sore",
+    "shift pagi": "Pagi",
+    "shift siang": "Siang",
+    "shift sore": "Sore"
+  };
+
+  return shiftNameMap[normalizedValue] || rawValue;
+};
+
+const normalizePenugasanShift = (item) => {
+  if (!item) return item;
+
+  return {
+    ...item,
+    shift: normalizeShiftValue(item.shift)
+  };
+};
+
 export const findAllPenugasan = async () => {
   try {
     const result = await pool.query(`
@@ -43,7 +75,7 @@ export const findAllPenugasan = async () => {
       LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       ORDER BY p.tanggal_awal DESC
     `);
-    return result.rows;
+    return result.rows.map(normalizePenugasanShift);
   } catch (error) {
     console.error("Error finding all penugasan:", error);
     throw error;
@@ -70,7 +102,7 @@ export const findPenugasanById = async (id) => {
       LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       WHERE p.id_penugasan = $1
     `, [id]);
-    return result.rows[0];
+    return normalizePenugasanShift(result.rows[0]);
   } catch (error) {
     console.error("Error finding penugasan by id:", error);
     throw error;
@@ -79,6 +111,8 @@ export const findPenugasanById = async (id) => {
 
 export const createPenugasan = async (data) => {
   try {
+    const normalizedShift = normalizeShiftValue(data.shift);
+
     console.log("📊 Insert Query - Data yang akan disimpan:", {
       id_user: data.id_user,
       id_ob: data.id_ob,
@@ -87,7 +121,7 @@ export const createPenugasan = async (data) => {
       tanggal_awal: data.tanggal_awal,
       tanggal_akhir: data.tanggal_akhir,
       kode_pengerjaan: data.kode_pengerjaan,
-      shift: data.shift,
+      shift: normalizedShift,
       deskripsi: data.deskripsi,
       rolling_mingguan: data.rolling_mingguan
     });
@@ -106,12 +140,12 @@ export const createPenugasan = async (data) => {
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
-      data.shift || null,
+      normalizedShift || null,
       data.deskripsi || null,
       data.rolling_mingguan || false
     ]);
     console.log("✅ Data berhasil disimpan:", result.rows[0]);
-    return result.rows[0];
+    return normalizePenugasanShift(result.rows[0]);
   } catch (error) {
     console.error("Error creating penugasan:", error);
     throw error;
@@ -120,6 +154,8 @@ export const createPenugasan = async (data) => {
 
 export const updatePenugasan = async (id, data) => {
   try {
+    const normalizedShift = normalizeShiftValue(data.shift);
+
     console.log("📊 Update Query - ID:", id, "Data yang akan diupdate:", {
       id_user: data.id_user,
       id_ob: data.id_ob,
@@ -128,7 +164,7 @@ export const updatePenugasan = async (id, data) => {
       tanggal_awal: data.tanggal_awal,
       tanggal_akhir: data.tanggal_akhir,
       kode_pengerjaan: data.kode_pengerjaan,
-      shift: data.shift,
+      shift: normalizedShift,
       deskripsi: data.deskripsi,
       rolling_mingguan: data.rolling_mingguan
     });
@@ -156,13 +192,13 @@ export const updatePenugasan = async (id, data) => {
       data.tanggal_awal,
       data.tanggal_akhir,
       data.kode_pengerjaan,
-      data.shift || null,
+      normalizedShift || null,
       data.deskripsi || null,
       data.rolling_mingguan || false,
       id
     ]);
     console.log("✅ Data berhasil diupdate:", result.rows[0]);
-    return result.rows[0];
+    return normalizePenugasanShift(result.rows[0]);
   } catch (error) {
     console.error("Error updating penugasan:", error);
     throw error;
@@ -357,6 +393,41 @@ export const deleteTugas = async (id) => {
 };
 
 // LAPORAN functions
+
+// Helper function untuk mengambil snapshot data saat laporan dibuat
+export const getSnapshotDataForLaporan = async (id_penugasan) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.kode_pengerjaan,
+        p.deskripsi as deskripsi_penugasan,
+        o.nama_ob,
+        o.kontak as kontak_ob,
+        r.nama_ruangan,
+        r.lantai,
+        t.nama_tugas,
+        u.username,
+        u.nama_lengkap
+      FROM penugasan p
+      LEFT JOIN ob o ON p.id_ob = o.id_ob
+      LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
+      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
+      LEFT JOIN users u ON p.id_user = u.id_user
+      WHERE p.id_penugasan = $1
+    `, [id_penugasan]);
+    
+    if (result.rows.length === 0) {
+      console.warn(`⚠️ Snapshot data tidak ditemukan untuk id_penugasan: ${id_penugasan}`);
+      return null;
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error getting snapshot data:", error);
+    throw error;
+  }
+};
+
 export const findAllLaporan = async ({ tanggal, tanggal_awal, tanggal_akhir } = {}) => {
   try {
     let whereClause = "";
@@ -378,27 +449,14 @@ export const findAllLaporan = async ({ tanggal, tanggal_awal, tanggal_akhir } = 
 
     const query = `
       SELECT
-        l.*,
-        p.kode_pengerjaan,
-        p.deskripsi as deskripsi_penugasan,
-        o.nama_ob,
-        r.nama_ruangan,
-        r.lantai,
-        t.nama_tugas as detail_pekerjaan
+        l.*
       FROM laporan l
-      LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
-      LEFT JOIN ob o ON p.id_ob = o.id_ob
-      LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
-      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
-      /*
-        Tugas diambil dari relasi penugasan -> tugas melalui id_penugasan.
-        Tidak perlu kolom tugas tambahan di tabel laporan.
-      */
       ${whereClause}
       ORDER BY l.created_at DESC
     `;
     const result = await pool.query(query, params);
-    return result.rows;
+    // Format results dengan snapshot data
+    return formatLaporanListWithSnapshot(result.rows);
   } catch (error) {
     console.error("Error finding all laporan:", error);
     throw error;
@@ -409,18 +467,8 @@ export const findLaporanByPenugasan = async (id_penugasan, tanggal) => {
   try {
     const query = `
       SELECT
-        l.*,
-        p.kode_pengerjaan,
-        p.deskripsi as deskripsi_penugasan,
-        o.nama_ob,
-        r.nama_ruangan,
-        r.lantai,
-        t.nama_tugas as detail_pekerjaan
+        l.*
       FROM laporan l
-      LEFT JOIN penugasan p ON l.id_penugasan = p.id_penugasan
-      LEFT JOIN ob o ON p.id_ob = o.id_ob
-      LEFT JOIN ruangan r ON p.id_ruangan = r.id_ruangan
-      LEFT JOIN tugas t ON p.id_tugas = t.id_tugas
       WHERE l.id_penugasan = $1
       ${tanggal ? "AND DATE(l.tanggal) = $2" : ""}
       ORDER BY l.created_at DESC
@@ -428,7 +476,8 @@ export const findLaporanByPenugasan = async (id_penugasan, tanggal) => {
     `;
     const params = tanggal ? [id_penugasan, tanggal] : [id_penugasan];
     const result = await pool.query(query, params);
-    return result.rows[0];
+    // Format result dengan snapshot data
+    return formatLaporanWithSnapshot(result.rows[0]);
   } catch (error) {
     console.error("Error finding laporan by penugasan:", error);
     throw error;
@@ -459,11 +508,28 @@ export const createLaporan = async (data) => {
       foto_path_exists: !!data.foto_path
     });
 
+    // Ambil snapshot data untuk immutability
+    const snapshot = await getSnapshotDataForLaporan(data.id_penugasan);
+    
+    if (snapshot) {
+      console.log("📸 Snapshot data berhasil diambil:", {
+        kode_pengerjaan: snapshot.kode_pengerjaan,
+        nama_ob: snapshot.nama_ob,
+        nama_ruangan: snapshot.nama_ruangan,
+        nama_tugas: snapshot.nama_tugas,
+        username: snapshot.username
+      });
+    }
+
     const result = await pool.query(`
       INSERT INTO laporan (
         id_penugasan, id_user_pengawas, tanggal, shift,
-        status_kehadiran, person_assigned, nilai, catatan, foto_path
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        status_kehadiran, person_assigned, nilai, catatan, foto_path,
+        snapshot_kode_pengerjaan, snapshot_deskripsi_penugasan,
+        snapshot_nama_ob, snapshot_kontak_ob, snapshot_nama_ruangan,
+        snapshot_lantai, snapshot_nama_tugas,
+        snapshot_username_user, snapshot_nama_lengkap_user
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `, [
       data.id_penugasan,
@@ -474,10 +540,19 @@ export const createLaporan = async (data) => {
       data.person_assigned,
       data.nilai || null,
       data.catatan || null,
-      data.foto_path || null
+      data.foto_path || null,
+      snapshot?.kode_pengerjaan || null,
+      snapshot?.deskripsi_penugasan || null,
+      snapshot?.nama_ob || null,
+      snapshot?.kontak_ob || null,
+      snapshot?.nama_ruangan || null,
+      snapshot?.lantai || null,
+      snapshot?.nama_tugas || null,
+      snapshot?.username || null,
+      snapshot?.nama_lengkap || null
     ]);
     
-    console.log("✅ Laporan berhasil disimpan ke DB:", result.rows[0]);
+    console.log("✅ Laporan berhasil disimpan ke DB dengan snapshot data:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error("❌ Error creating laporan:", error);

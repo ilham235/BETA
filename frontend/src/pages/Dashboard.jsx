@@ -7,6 +7,7 @@ import iconSore from "../assets/sore.png";
 import Sidebar from "../components/Sidebar"; // Import Sidebar baru
 import UserTopbar from "../components/UserTopbar";
 import { penugasanAPI, shiftAPI } from "../service/api";
+import { normalizeShiftValue } from "../utils/shiftUtils";
 import "./Dashboard.css";
 import Penilaian from "./Penilaian";
 import TambahTugas from "./TambahTugas";
@@ -473,7 +474,7 @@ export default function Dashboard() {
                         })()}
                       </div>
                       <div className="card-detail">{item.detail_pekerjaan || 'N/A'}</div>
-                      <div className="card-meta">{getAssignedPetugas(item)} | {item.shift || 'N/A'}</div>
+                      <div className="card-meta">{getAssignedPetugas(item)} | {normalizeShiftValue(item.shift) || 'N/A'}</div>
                       <div className="card-action">
                         {laporanMap[String(item.id_penugasan || item.id)] ? (
                           <button className="btn-detail" onClick={() => {/* open detail - navigate to pengawasan detail or reuse modal */ navigate('/pengawasan'); }}>
@@ -524,7 +525,7 @@ export default function Dashboard() {
                       <tr key={index}>
                         <td>{item.nama_ruangan || 'N/A'} - Lantai {item.lantai || 'N/A'}</td>
                         <td>{item.detail_pekerjaan || 'N/A'}</td>
-                        <td>{item.shift || 'N/A'}</td>
+                        <td>{normalizeShiftValue(item.shift) || 'N/A'}</td>
                         <td>{getAssignedPetugas(item)}</td>
                         <td>
                           {(() => {

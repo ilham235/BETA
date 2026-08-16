@@ -1,18 +1,18 @@
 import {
-    FiFileText,
-    FiLayout,
-    FiSettings,
-    FiUsers
+  FiFileText,
+  FiLayout,
+  FiSettings,
+  FiUsers
 } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 import logoBeta from "../assets/beta.png";
 import "./Sidebar.css";
 
-export default function Sidebar() {
+export default function Sidebar({ className = "" }) {
   const location = useLocation();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar supervisor-sidebar ${className}`.trim()}>
       <div className="logo-section">
         <img 
           src={logoBeta} 

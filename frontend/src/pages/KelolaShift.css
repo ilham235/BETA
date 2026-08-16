@@ -2,11 +2,14 @@
   display: flex;
   min-height: 100vh;
   background: #f8f9fb;
+  width: 100%;
 }
 
 .kelola-shift-main {
   flex: 1;
   padding: 24px 32px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* HEADER */
@@ -14,83 +17,325 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.header p {
+  color: #64748b;
+  margin-top: 6px;
+  font-size: 14px;
 }
 
 .btn-add {
   background: #00852d;
   color: white;
-  padding: 10px 16px;
+  padding: 10px 18px;
   border-radius: 12px;
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  justify-content: center;
   width: fit-content;
   cursor: pointer;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 133, 45, 0.2);
+}
+
+.btn-add:hover {
+  background: #006b24;
+  transform: translateY(-1px);
 }
 
 /* TABLE */
 .table-box {
   margin-top: 24px;
   background: white;
-  border-radius: 20px;
-  border: 1px solid #eee;
-  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #ececec;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-}
-
-th, td {
-  padding: 16px;
+  min-width: 480px;
 }
 
 thead {
-  background: #f5f6f8;
+  background: #f8fafc;
+}
+
+th, td {
+  padding: 16px 18px;
+  text-align: left;
+}
+
+th {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 td {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #334155;
 }
 
 .aksi {
   display: flex;
-  gap: 10px;
+  gap: 14px;
+  align-items: center;
+}
+
+.aksi svg {
   cursor: pointer;
+  font-size: 17px;
+  transition: transform 0.15s ease;
+}
+
+.aksi svg:first-child {
+  color: #2563eb;
+}
+
+.aksi svg:last-child {
+  color: #ef4444;
+}
+
+.aksi svg:hover {
+  transform: scale(1.15);
 }
 
 .empty {
   text-align: center;
-  padding: 20px;
-  color: #777;
+  padding: 30px;
+  color: #94a3b8;
 }
 
-/* MODAL (reuse style sebelumnya) */
+/* MODAL */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 10000;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .modal-content {
   background: white;
-  padding: 24px;
-  border-radius: 16px;
-  width: 400px;
+  padding: 28px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-content label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
 }
 
 .modal-content input {
   width: 100%;
-  margin-bottom: 12px;
-  padding: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modal-content input:focus {
+  border-color: #00852d;
+  box-shadow: 0 0 0 3px rgba(0, 133, 45, 0.1);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-actions button,
+.modal-actions .btn-cancel,
+.modal-actions .btn-save {
+  padding: 11px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-actions button[type="button"],
+.modal-actions .btn-cancel {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-actions button[type="button"]:hover,
+.modal-actions .btn-cancel:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.modal-actions button[type="submit"],
+.modal-actions .btn-save {
+  background: #00852d;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 133, 45, 0.2);
+}
+
+.modal-actions button[type="submit"]:hover,
+.modal-actions .btn-save:hover {
+  background: #006b24;
+}
+
+.modal-actions button:disabled,
+.modal-actions .btn-save:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* =========================================
+   RESPONSIVE (TABLET & MOBILE)
+   ========================================= */
+
+@media (max-width: 1024px) {
+  .kelola-shift-page {
+    flex-direction: column;
+  }
+
+  .kelola-shift-main {
+    padding: 12px 14px 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+
+  .header p {
+    font-size: 13px;
+    margin-top: 4px;
+    margin-bottom: 0;
+  }
+
+  .btn-add {
+    padding: 8px 14px;
+    font-size: 13px;
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .table-box {
+    margin-top: 18px;
+    border-radius: 18px;
+  }
+
+  th, td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 {
+    font-size: 19px;
+  }
+
+  .header p {
+    font-size: 12px;
+  }
+
+  .btn-add {
+    padding: 6px 12px;
+    font-size: 12px;
+    height: 36px;
+    gap: 6px;
+  }
 }

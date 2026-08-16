@@ -1,269 +1,242 @@
+/* =========================================
+   LAPORAN KEBERSIHAN PAGE STYLES
+   ========================================= */
+
 .laporan-page {
   display: flex;
   min-height: 100vh;
   background: #f8f9fb;
+  width: 100%;
 }
 
 .laporan-main {
   flex: 1;
   padding: 24px 32px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-/* TOPBAR */
-.topbar {
+/* CONTENT CONTAINER */
+.content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 16px;
-  margin-bottom: 24px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.search-box {
-  width: 360px;
-  height: 46px;
-  background: white;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  border: 1px solid #eee;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  width: 100%;
-}
-
-/* USER */
-.user-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: white;
-  padding: 8px 14px;
-  border-radius: 14px;
-  border: 1px solid #eee;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  background: #00a63e;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* HEADER */
+/* HEADER (Matches Kelola Tugas & Admin layout) */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .header h1 {
   font-size: 36px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .header p {
-  color: #777;
   margin-top: 6px;
-}
-
-/* CONTENT */
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.laporan-actions {
-  display: flex;
-  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 0;
 }
 
 .btn-cetak {
-  background: white;
-  color: #1a1a1a;
-  border: 1.5px solid #e2e8f0;
-  padding: 10px 18px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  width: auto;
-  transition: background 0.2s;
-}
-
-.btn-cetak:hover {
-  background: #f7fafc;
-}
-
-.btn-unduh {
-  background: #0a8f3c;
+  background: #00852d;
   color: white;
   border: none;
   padding: 10px 18px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
+  justify-content: center;
+  gap: 8px;
   cursor: pointer;
-  width: auto;
-  transition: background 0.2s;
+  width: fit-content;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 133, 45, 0.2);
+  flex-shrink: 0;
 }
 
-.btn-unduh:hover {
-  background: #087532;
+.btn-cetak:hover {
+  background: #006b24;
+  transform: translateY(-1px);
 }
 
-
+/* FILTER CARD */
 .filter-card {
-  background: white;
-  border-radius: 20px;
-  padding: 25px 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  margin-bottom: 20px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 22px 26px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  border: 1px solid #ececec;
 }
 
 .filter-title {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 18px;
+  color: #1e293b;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 18px;
 }
 
 .filter-item label {
   display: block;
   font-size: 12px;
-  color: #a0aec0;
+  font-weight: 600;
+  color: #64748b;
   margin-bottom: 6px;
 }
 
-.filter-select {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.filter-date-input,
+.filter-select-input {
+  width: 100%;
+  padding: 10px 14px;
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  padding: 10px 14px;
   font-size: 13px;
-  color: #2d3748;
-  cursor: pointer;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
+.filter-date-input:focus,
+.filter-select-input:focus {
+  border-color: #00852d;
+  box-shadow: 0 0 0 3px rgba(0, 133, 45, 0.1);
+}
 
+/* RIWAYAT TUGAS TABLE CARD */
+.laporan-table-card,
 .table-card {
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  margin-bottom: 20px;
+  display: block !important;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px 26px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  border: 1px solid #ececec;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.laporan-table-header,
 .table-header {
-  display: flex;
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  gap: 16px;
 }
 
+.laporan-table-header h3,
 .table-header h3 {
   font-size: 18px;
   font-weight: 700;
   margin: 0;
-  color: #1a1a1a;
+  color: #1e293b;
 }
 
+.laporan-table-search,
 .small-search {
-  background: #f1f4f8;
-  padding: 10px 15px;
+  display: flex !important;
+  background: #f8fafc;
+  padding: 8px 14px;
   border-radius: 12px;
-  display: flex;
   align-items: center;
   gap: 8px;
   width: 280px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
+.laporan-table-search:focus-within,
+.small-search:focus-within {
+  border-color: #00852d;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 133, 45, 0.1);
+}
+
+.laporan-table-search svg,
+.small-search svg {
+  color: #94a3b8;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.laporan-table-search input,
 .small-search input {
   background: transparent;
   border: none;
   outline: none;
   font-size: 13px;
+  color: #1e293b;
   width: 100%;
 }
 
+.laporan-table-scroll,
 .table-scroll-container {
-  max-height: 500px;
+  display: block !important;
+  max-height: 520px;
+  overflow-x: auto !important;
   overflow-y: auto;
-  border-radius: 8px;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
-.table-scroll-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.table-scroll-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 8px;
-}
-
-.table-scroll-container::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 8px;
-}
-
-.table-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
-
+.laporan-table,
 .custom-table {
+  display: table !important;
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
+.laporan-table th,
 .custom-table th {
   text-align: left;
-  padding: 15px;
-  color: #1a1a1a;
-  font-weight: 700;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
+  padding: 14px 16px;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
   position: sticky;
   top: 0;
-  background: white;
+  background: #f8fafc;
   z-index: 10;
 }
 
+.laporan-table td,
 .custom-table td {
-  padding: 15px;
+  padding: 14px 16px;
   font-size: 13px;
-  color: #4a4a4a;
-  border-bottom: 1px solid #f9f9f9;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
 }
 
+.laporan-table tr:hover,
 .custom-table tr:hover {
-  background-color: #fafafa;
+  background-color: #f8fafc;
 }
 
 .status-badge {
@@ -282,12 +255,14 @@
   display: inline-block;
 }
 
-.status-badge.selesai { color: #2d3748; }
-.status-badge.selesai::before { background: #38a169; }
-.status-badge.belum { color: #718096; }
-.status-badge.belum::before { background: #cbd5e0; }
+.status-badge.selesai { color: #16a34a; }
+.status-badge.selesai::before { background: #16a34a; }
+.status-badge.warning { color: #d97706; }
+.status-badge.warning::before { background: #f59e0b; }
+.status-badge.belum { color: #dc2626; }
+.status-badge.belum::before { background: #ef4444; }
 
-
+/* CHARTS SECTION */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -295,43 +270,56 @@
 }
 
 .chart-card {
-  background: white;
-  border-radius: 20px;
-  padding: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  border: 1px solid #ececec;
 }
 
 .chart-card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
 .chart-card-header h3 {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #1e293b;
   margin: 0;
 }
 
-.chart-icon {
+.icon-box {
+  background-color: #f0fff4;
+  color: #00852d;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
   font-size: 18px;
+  flex-shrink: 0;
 }
 
+.icon-box svg {
+  stroke-width: 2.5px;
+}
 
 .ringkasan-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .ringkasan-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #f7fafc;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .ringkasan-item:last-child {
@@ -340,72 +328,152 @@
 
 .ringkasan-label {
   font-size: 13px;
-  color: #718096;
+  color: #64748b;
 }
 
 .ringkasan-value {
   font-size: 14px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #1e293b;
 }
 
 .ringkasan-value.green {
-  color: #0a8f3c;
-}
-.filter-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  gap: 12px; 
+  color: #00852d;
 }
 
+/* =========================================
+   RESPONSIVE BREAKPOINTS (TABLET & MOBILE)
+   ========================================= */
 
-.chart-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px; 
-  margin-bottom: 20px;
+@media (max-width: 1024px) {
+  .laporan-page {
+    flex-direction: column;
+  }
+
+  .laporan-main {
+    padding: 12px 14px 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+
+  .header p {
+    font-size: 13px;
+    margin-top: 4px;
+    margin-bottom: 0;
+  }
+
+  .btn-cetak {
+    padding: 8px 14px;
+    font-size: 13px;
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .filter-card {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .laporan-table-card,
+  .table-card {
+    display: block !important;
+    padding: 18px 14px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .laporan-table-header,
+  .table-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .laporan-table-search,
+  .small-search {
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .laporan-table-scroll,
+  .table-scroll-container {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .laporan-table,
+  .custom-table {
+    display: table !important;
+    min-width: 580px !important;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .chart-card {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
 }
 
-.chart-card-header h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0;
-}
+@media (max-width: 480px) {
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
 
+  .header h1 {
+    font-size: 19px;
+  }
 
-.icon-box {
-  background-color: #f0fff4; 
-  color: #0a8f3c;           
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;      
-  font-size: 18px;
-  flex-shrink: 0;           
-}
+  .header p {
+    font-size: 12px;
+  }
 
+  .btn-cetak {
+    padding: 6px 12px;
+    font-size: 12px;
+    height: 36px;
+    gap: 6px;
+  }
 
-.icon-box svg {
-  stroke-width: 2.5px; 
-}
-
-
-.chart-icon {
-  display: none; 
-}
-
-
-.chart-card {
-  background: white;
-  border-radius: 20px;
-  padding: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  border: 1px solid #f0f0f0; 
+  .laporan-table th,
+  .laporan-table td,
+  .custom-table th,
+  .custom-table td {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
 }

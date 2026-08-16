@@ -260,15 +260,18 @@
     font-size: 24px;
   }
 
-  .table-card {
+  .penugasan-page .table-card,
+  .penugasan-content .table-card {
     background: transparent;
     padding: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .table-card-header,
-  .custom-table {
+  .penugasan-page .table-card-header,
+  .penugasan-page .custom-table,
+  .penugasan-content .table-card-header,
+  .penugasan-content .custom-table {
     display: none;
   }
 
